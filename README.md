@@ -54,10 +54,11 @@ npm install pdfkit
   estorno, tributacao regular e compra governamental
 - Imposto Seletivo (IS) no item e no total
 
-### NFC-e (modelo 65) — Em desenvolvimento
+### NFC-e (modelo 65) — Completo
 
 - Modelo configuravel (`'55' | '65'`)
-- QR Code da NFC-e (URL com hash SHA1)
+- QR Code v2 da NFC-e (online e contingencia offline, hash SHA1)
+- Webservices de NFC-e de todas as UFs
 - Campos `qrCode` e `urlChave` no bloco `infNFeSupl`
 - Destinatario opcional (consumidor nao identificado)
 - Cupom termico 80mm com QR Code
@@ -147,6 +148,43 @@ console.log(result.autorizada);   // true
 console.log(result.protocolo);    // '151240000012345'
 console.log(result.chaveAcesso);  // 44 digitos
 ```
+
+### Transmitir NFC-e (modelo 65)
+
+Mesma chamada da NFe: basta informar `modelo: '65'` e configurar o CSC
+(`cIdToken` + `csc`, obtidos no portal da SEFAZ da sua UF).
+
+```typescript
+const nfce = NFeCore.create({
+  pfx: readFileSync('./certificado.pfx'),
+  senha: 'senha-do-certificado',
+  ambiente: 'homologacao',
+  uf: 'MT',
+  cIdToken: '000001',
+  csc: 'SEU-CSC'
+});
+
+const result = await nfce.transmitir({
+  identificacao: {
+    modelo: '65',
+    // ...demais campos como na NFe; `destinatario` e opcional
+  },
+  // ...
+});
+```
+
+O QR Code e a `urlChave` sao gerados e inseridos no `infNFeSupl` automaticamente.
+
+### Gerar cupom NFC-e (PDF 80mm)
+
+```typescript
+import { GerarCupomUseCase } from '@brasil-fiscal/nfe';
+
+const pdf = await new GerarCupomUseCase().execute(result.xmlProtocolado!);
+writeFileSync('cupom.pdf', pdf);
+```
+
+> Requer `pdfkit` e `qrcode` instalados: `npm install pdfkit qrcode`
 
 ### Consultar protocolo
 
