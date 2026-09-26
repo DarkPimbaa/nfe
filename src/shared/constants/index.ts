@@ -1,4 +1,15 @@
-export { UF_CODES, MT_MUNICIPIOS } from './ibge-codes';
+export {
+  UF_CODES,
+  MUNICIPIOS,
+  PAISES,
+  MT_MUNICIPIOS,
+  CODIGO_PAIS_BRASIL,
+  getMunicipio,
+  getUfDoMunicipio,
+  findCodigoMunicipio,
+  getMunicipiosDaUf,
+  getPais
+} from './ibge-codes';
 export {
   CFOP_SAIDA_INTERNA,
   CFOP_SAIDA_INTERESTADUAL,

@@ -14,13 +14,92 @@ export type { NFeConfig, NFeEnvironment, TransmitResult, ConsultResult } from '.
 export { NFe } from './domain/entities/NFe';
 export type {
   NFeProps,
-  NFeIdentificacao
+  NFeIdentificacao,
+  NotaReferenciada,
+  AutorizadoXml,
+  ResponsavelTecnico,
+  CompraGovernamentalProps,
+  TotaisServicoProps,
+  RetencoesTributosProps
 } from './domain/entities/NFe';
 export type { EmitenteProps } from './domain/entities/Emitente';
 export type { DestinatarioProps } from './domain/entities/Destinatario';
 export type { EnderecoProps } from './domain/entities/Endereco';
-export type { ProdutoProps, ICMSProps, PISProps, COFINSProps, IPIProps } from './domain/entities/Produto';
-export type { TransporteProps, VolumeProps, VeiculoTranspProps } from './domain/entities/Transporte';
+export type {
+  ProdutoProps,
+  ICMSProps,
+  ICMSEfetivoProps,
+  ICMSMonofasicoProps,
+  ICMSUFDestProps,
+  IIProps,
+  ISSQNProps,
+  PISCOFINSSTProps,
+  ImpostoSeletivoProps,
+  PISProps,
+  COFINSProps,
+  IPIProps
+} from './domain/entities/Produto';
+export type {
+  AdicaoImportacaoProps,
+  DeclaracaoImportacaoProps,
+  ExportacaoIndiretaProps,
+  DetalheExportacaoProps,
+  RastroProps,
+  CreditoPresumidoProps,
+  VeiculoNovoProps,
+  MedicamentoProps,
+  ArmamentoProps,
+  CideProps,
+  EncerranteProps,
+  OrigemCombustivelProps,
+  CombustivelProps,
+  ProdutoNFFProps,
+  EmbalagemProps,
+  ImpostoDevolvidoProps,
+  DFeReferenciadoProps,
+  ObservacaoItemProps
+} from './domain/entities/ProdutoDetalhes';
+export type {
+  IBSCBSProps,
+  DiferimentoIbsCbsProps,
+  ReducaoIbsCbsProps,
+  EnteTributanteProps,
+  TributacaoRegularProps,
+  TributacaoCompraGovProps,
+  MonofasiaPadraoProps,
+  MonofasiaRetencaoProps,
+  MonofasiaDiferimentoProps,
+  MonofasiaIbsCbsProps,
+  TransferenciaCreditoProps,
+  AjusteCompetenciaProps,
+  EstornoCreditoProps,
+  CreditoPresumidoEnteProps,
+  CreditoPresumidoOperacaoProps,
+  CreditoPresumidoZfmProps
+} from './domain/entities/IbsCbs';
+export type {
+  LocalProps,
+  AvulsaProps,
+  IntermediadorProps,
+  ExportacaoProps,
+  CompraProps
+} from './domain/entities/Local';
+export type {
+  ObservacaoProps,
+  ProcessoReferenciadoProps,
+  FornecimentoDiarioProps,
+  DeducaoCanaProps,
+  CanaProps,
+  DefensivoProps,
+  GuiaTransitoProps,
+  AgropecuarioProps
+} from './domain/entities/InformacoesAdicionais';
+export type {
+  TransporteProps,
+  VolumeProps,
+  VeiculoTranspProps,
+  RetencaoTransporteProps
+} from './domain/entities/Transporte';
 export type { PagamentoProps, FormaPagamentoProps } from './domain/entities/Pagamento';
 export type { CobrancaProps, FaturaProps, DuplicataProps } from './domain/entities/Cobranca';
 
@@ -28,6 +107,7 @@ export type { CobrancaProps, FaturaProps, DuplicataProps } from './domain/entiti
 export type {
   CertificateProvider,
   CertificateData,
+  CertificateInfo,
   SefazTransport,
   SefazRequest,
   SefazResponse,
@@ -46,6 +126,10 @@ export {
 } from '@brasil-fiscal/core';
 export { DefaultXmlBuilder } from './infra/xml/DefaultXmlBuilder';
 export { XsdSchemaValidator } from './infra/schema/XsdSchemaValidator';
+export type {
+  SchemaDocument,
+  XsdSchemaValidatorOptions
+} from './infra/schema/XsdSchemaValidator';
 
 // Use cases
 export { TransmitNFeUseCase } from './application/use-cases/TransmitNFeUseCase';
@@ -69,6 +153,22 @@ export { getSefazUrl, ibgeToUf, UF_AUTORIZADOR, AUTORIZADOR_URLS } from './share
 export type { SefazService, SefazEnvironment, Autorizador } from './shared/constants/sefaz-urls';
 export { getAnUrl } from './shared/constants/sefaz-an-urls';
 export type { AnService, AnEnvironment } from './shared/constants/sefaz-an-urls';
+
+// Tabelas IBGE
+export {
+  UF_CODES,
+  MUNICIPIOS,
+  PAISES,
+  CODIGO_PAIS_BRASIL,
+  getMunicipio,
+  getUfDoMunicipio,
+  findCodigoMunicipio,
+  getMunicipiosDaUf,
+  getPais
+} from './shared/constants/ibge-codes';
+
+// Certificado
+export { certInfo } from '@brasil-fiscal/core';
 
 // NFC-e
 export { buildNFCeQRCodeUrl, buildInfNFeSupl } from './shared/helpers/nfce-qrcode';

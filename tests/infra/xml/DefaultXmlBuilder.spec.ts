@@ -114,7 +114,12 @@ describe('DefaultXmlBuilder', () => {
     const xml = builder.build(sampleNFe);
 
     assert.ok(xml.includes('<CPF>52998224725</CPF>'));
-    assert.ok(xml.includes('<xNome>Joao da Silva</xNome>'));
+    // Em homologacao (tpAmb=2) o nome do destinatario e substituido pelo aviso
+    // exigido pela SEFAZ; o nome real so vai em producao.
+    assert.ok(
+      xml.includes('<xNome>NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL</xNome>')
+    );
+    assert.ok(!xml.includes('Joao da Silva'));
   });
 
   it('deve conter dados do produto', () => {

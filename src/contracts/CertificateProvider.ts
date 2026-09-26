@@ -1,1 +1,1 @@
-export type { CertificateData, CertificateProvider } from '@brasil-fiscal/core';
+export type { CertificateData, CertificateProvider, CertificateInfo } from '@brasil-fiscal/core';

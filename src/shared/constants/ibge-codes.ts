@@ -1,133 +1,102 @@
+import { UF_CODES, stripAccents } from '@brasil-fiscal/core';
+import { MUNICIPIOS } from './municipios';
+import { PAISES } from './paises';
+
 export { UF_CODES } from '@brasil-fiscal/core';
+export { MUNICIPIOS } from './municipios';
+export { PAISES } from './paises';
 
 /**
- * Municipios do Mato Grosso (MT) — codigos IBGE.
- * Priorizados os principais municipios. Lista completa sera expandida.
+ * Codigo do Brasil na tabela de paises (campo cPais). Padrao para enderecos nacionais.
  */
-export const MT_MUNICIPIOS: Record<string, string> = {
-  '5100102': 'Acorizal',
-  '5100201': 'Agua Boa',
-  '5100250': 'Alta Floresta',
-  '5100300': 'Alto Araguaia',
-  '5100359': 'Alto Boa Vista',
-  '5100409': 'Alto Garcas',
-  '5100508': 'Alto Paraguai',
-  '5100607': 'Alto Taquari',
-  '5101001': 'Araputanga',
-  '5101209': 'Aripuana',
-  '5101308': 'Barao de Melgaco',
-  '5101407': 'Barra do Bugres',
-  '5101605': 'Barra do Garcas',
-  '5102504': 'Caceres',
-  '5102603': 'Campinapolis',
-  '5102637': 'Campo Novo do Parecis',
-  '5102678': 'Campo Verde',
-  '5102686': 'Campos de Julio',
-  '5102694': 'Canabrava do Norte',
-  '5102702': 'Canarana',
-  '5103007': 'Chapada dos Guimaraes',
-  '5103056': 'Claudia',
-  '5103106': 'Cocalinho',
-  '5103205': 'Colider',
-  '5103254': 'Comodoro',
-  '5103304': 'Confresa',
-  '5103353': 'Conquista DOeste',
-  '5103361': 'Cotriguacu',
-  '5103403': 'Cuiaba',
-  '5103437': 'Curvelandia',
-  '5103452': 'Denise',
-  '5103502': 'Diamantino',
-  '5103601': 'Dom Aquino',
-  '5103700': 'Feliz Natal',
-  '5103809': 'Figueiropolis DOeste',
-  '5104104': 'Gaucha do Norte',
-  '5104203': 'General Carneiro',
-  '5104500': 'Guaranta do Norte',
-  '5104906': 'Guiratinga',
-  '5105002': 'Indiavai',
-  '5105101': 'Itauba',
-  '5105150': 'Itiquira',
-  '5105200': 'Jaciara',
-  '5105259': 'Jangada',
-  '5105309': 'Jauru',
-  '5105507': 'Juara',
-  '5105606': 'Juina',
-  '5105622': 'Juruena',
-  '5105630': 'Juscimeira',
-  '5105903': 'Lambari DOeste',
-  '5106000': 'Lucas do Rio Verde',
-  '5106109': 'Luciara',
-  '5106158': 'Marcelandia',
-  '5106174': 'Matupa',
-  '5106208': 'Mirassol DOeste',
-  '5106216': 'Nobres',
-  '5106224': 'Nortelandia',
-  '5106232': 'Nossa Sra do Livramento',
-  '5106240': 'Nova Bandeirantes',
-  '5106257': 'Nova Brasilandia',
-  '5106265': 'Nova Canaa do Norte',
-  '5106315': 'Nova Guarita',
-  '5106372': 'Nova Lacerda',
-  '5106422': 'Nova Maringa',
-  '5106455': 'Nova Monte Verde',
-  '5106505': 'Nova Mutum',
-  '5106653': 'Nova Olimpia',
-  '5106703': 'Nova Ubirata',
-  '5106752': 'Nova Xavantina',
-  '5106778': 'Novo Horizonte do Norte',
-  '5106802': 'Novo Mundo',
-  '5106828': 'Novo Santo Antonio',
-  '5106851': 'Novo Sao Joaquim',
-  '5107008': 'Paranaita',
-  '5107040': 'Paranatinga',
-  '5107065': 'Pedra Preta',
-  '5107107': 'Peixoto de Azevedo',
-  '5107156': 'Planalto da Serra',
-  '5107180': 'Pocone',
-  '5107198': 'Pontal do Araguaia',
-  '5107206': 'Ponte Branca',
-  '5107248': 'Pontes e Lacerda',
-  '5107263': 'Porto Alegre do Norte',
-  '5107297': 'Porto dos Gauchos',
-  '5107305': 'Porto Esperidiao',
-  '5107354': 'Porto Estrela',
-  '5107404': 'Poxoreo',
-  '5107503': 'Primavera do Leste',
-  '5107578': 'Querencia',
-  '5107602': 'Reserva do Cabacal',
-  '5107701': 'Ribeirao Cascalheira',
-  '5107743': 'Ribeiraozinho',
-  '5107750': 'Rio Branco',
-  '5107768': 'Rondolandia',
-  '5107776': 'Rondonopolis',
-  '5107793': 'Rosario Oeste',
-  '5107800': 'Salto do Ceu',
-  '5107859': 'Santa Carmem',
-  '5107875': 'Santa Cruz do Xingu',
-  '5107883': 'Santa Rita do Trivelato',
-  '5107891': 'Santa Terezinha',
-  '5107909': 'Santo Afonso',
-  '5107925': 'Santo Antonio do Leste',
-  '5107941': 'Santo Antonio do Leverger',
-  '5107958': 'Sao Felix do Araguaia',
-  '5107850': 'Sao Jose do Povo',
-  '5108006': 'Sao Jose do Rio Claro',
-  '5108030': 'Sao Jose do Xingu',
-  '5108056': 'Sao Jose dos Quatro Marcos',
-  '5108105': 'Sao Pedro da Cipa',
-  '5108204': 'Sapezal',
-  '5108253': 'Serra Nova Dourada',
-  '5108352': 'Sinop',
-  '5108401': 'Sorriso',
-  '5108501': 'Tabapora',
-  '5108600': 'Tangara da Serra',
-  '5108808': 'Terra Nova do Norte',
-  '5108857': 'Tesouro',
-  '5108907': 'Torixoreu',
-  '5108956': 'Uniao do Sul',
-  '5109002': 'Vale de Sao Domingos',
-  '5109101': 'Varzea Grande',
-  '5109150': 'Vera',
-  '5109200': 'Vila Bela da Santissima Trindade',
-  '5109253': 'Vila Rica'
-};
+export const CODIGO_PAIS_BRASIL = '1058';
+
+const UF_BY_CODE: Record<string, string> = Object.fromEntries(
+  Object.entries(UF_CODES).map(([uf, codigo]) => [codigo, uf])
+);
+
+/**
+ * Normaliza um nome de municipio para comparacao: sem acentos, sem pontuacao,
+ * caixa alta e espacos colapsados. 'Sao Jose dos Quatro Marcos' e
+ * 'SÃO JOSÉ DOS  QUATRO MARCOS' viram a mesma chave.
+ */
+function normalizeNome(nome: string): string {
+  return stripAccents(nome)
+    .toUpperCase()
+    .replace(/[^A-Z0-9 ]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+let nomeIndex: Map<string, string> | null = null;
+
+/**
+ * Indice `UF|NOME_NORMALIZADO` -> codigo IBGE, construido na primeira busca por
+ * nome. Municipios homonimos existem entre UFs diferentes (Bom Jesus, por
+ * exemplo), por isso a UF faz parte da chave.
+ */
+function getNomeIndex(): Map<string, string> {
+  if (nomeIndex) return nomeIndex;
+
+  const index = new Map<string, string>();
+  for (const [codigo, nome] of Object.entries(MUNICIPIOS)) {
+    const uf = UF_BY_CODE[codigo.slice(0, 2)];
+    if (!uf) continue;
+    index.set(`${uf}|${normalizeNome(nome)}`, codigo);
+  }
+
+  nomeIndex = index;
+  return index;
+}
+
+/**
+ * Nome do municipio a partir do codigo IBGE de 7 digitos.
+ */
+export function getMunicipio(codigo: string): string | undefined {
+  return MUNICIPIOS[codigo];
+}
+
+/**
+ * UF do municipio, derivada dos dois primeiros digitos do codigo IBGE.
+ * Retorna undefined se o codigo nao existir na tabela.
+ */
+export function getUfDoMunicipio(codigo: string): string | undefined {
+  if (!MUNICIPIOS[codigo]) return undefined;
+  return UF_BY_CODE[codigo.slice(0, 2)];
+}
+
+/**
+ * Codigo IBGE a partir da UF e do nome do municipio. A comparacao ignora
+ * acentos, caixa e pontuacao.
+ */
+export function findCodigoMunicipio(uf: string, nome: string): string | undefined {
+  return getNomeIndex().get(`${uf.toUpperCase()}|${normalizeNome(nome)}`);
+}
+
+/**
+ * Lista os municipios de uma UF, em ordem de codigo IBGE.
+ */
+export function getMunicipiosDaUf(uf: string): Array<{ codigo: string; nome: string }> {
+  const codigoUf = UF_CODES[uf.toUpperCase()];
+  if (!codigoUf) return [];
+
+  return Object.entries(MUNICIPIOS)
+    .filter(([codigo]) => codigo.startsWith(codigoUf))
+    .map(([codigo, nome]) => ({ codigo, nome }));
+}
+
+/**
+ * Nome do pais a partir do codigo da tabela BACEN (campo cPais).
+ */
+export function getPais(codigo: string): string | undefined {
+  return PAISES[codigo];
+}
+
+/**
+ * Municipios do Mato Grosso.
+ *
+ * @deprecated Use `MUNICIPIOS` (tabela nacional completa) ou `getMunicipiosDaUf('MT')`.
+ */
+export const MT_MUNICIPIOS: Record<string, string> = Object.fromEntries(
+  Object.entries(MUNICIPIOS).filter(([codigo]) => codigo.startsWith('51'))
+);

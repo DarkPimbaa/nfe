@@ -221,6 +221,66 @@ Este documento descreve as fases de desenvolvimento do projeto. Cada fase tem um
 
 ---
 
+## Fase 9c: Grupos obrigatorios, tabelas nacionais e schemas
+
+**Status:** Concluida
+
+**Objetivo:** Fechar as lacunas do XML que mais causam rejeicao e tirar a lib do escopo "so MT".
+
+- [x] `infRespTec` — responsavel tecnico, com `hashCSRT` (SHA-1 de CSRT + chave, base64)
+- [x] `autXML` — ate 10 autorizados a baixar o XML (CNPJ ou CPF)
+- [x] `NFref` — documentos referenciados: `refNFe`, `refCTe`, `refNF`, `refNFP`, `refECF`
+- [x] `ICMSUFDest` — DIFAL da EC 87/2015, com partilha, FCP e totais no `ICMSTot`
+- [x] ICMS por CST: 00, 10, 20, 30, 40/41/50, 51 (diferimento), 60 (ST retido com `pST`), 70, 90
+- [x] CSOSN 101, 201, 202/203, 500 e 900 com ST e credito do Simples
+- [x] Totais reais de `vBCST`, `vST`, `vFCP`, `vFCPST`, `vFCPSTRet` e `vICMSDeson` (antes fixos em 0.00)
+- [x] Tabelas IBGE completas — 5.571 municipios e 248 paises, com busca por nome e UF derivada do codigo
+- [x] Pacote de schemas XSD completo (195 arquivos): eventos, EPEC, consultas, `procEvento`, `procInut`
+- [x] `XsdSchemaValidator` com 21 tipos de documento (`validate(xml, 'cancelamento')`)
+- [x] `NFeCore.certificado()` e `certInfo()` — titular, CNPJ/CPF, emissor, validade e dias para vencer
+- [x] Campos de pagamento do split payment: `indPag`, `xPag`, `dPag`, `CNPJPag`/`UFPag`,
+      `CNPJReceb`, `idTermPag` e `gPagAntecipado`
+- [x] Helper `formatDateOnly` no core (tipo TData do leiaute)
+- [x] Limpeza dos testes do nfe que duplicavam specs do core com expectativas desatualizadas
+- [x] 58 testes novos no nfe e 9 no core, validando contra o XSD oficial
+
+**Criterio de conclusao:** XMLs com os grupos novos passam na validacao XSD oficial.
+
+---
+
+## Fase 9d: Leiaute 4.00 completo
+
+**Status:** Concluida
+
+**Objetivo:** Cobrir 100% dos grupos de emissao do leiaute, medido contra o XSD oficial.
+
+- [x] Grupos de nota: avulsa, retirada, entrega, infIntermed, exporta, compra, cana,
+      agropecuario, infSolicNFF, obsCont/obsFisco/procRef
+- [x] `ide` completo: dhSaiEnt, dPrevEntrega, cMunFGIBS, indIntermed, dhCont+xJust,
+      tpNFDebito, tpNFCredito, gCompraGov, refNFeSig
+- [x] `transp` completo: retTransp, reboques, vagao, balsa, lacres, CPF de autonomo
+- [x] Grupos de item: cBarra, NVE, indEscala, CNPJFab, cBenef, gCred, EXTIPI, xPed,
+      nItemPed, nFCI, DI+adi, detExport, rastro, infProdNFF, infProdEmb,
+      indBemMovelUsado, veicProd, med, arma, comb (CIDE/encerrante/origComb), nRECOPI
+- [x] `det`: impostoDevol, infAdProd, obsItem, vItem, DFeReferenciado
+- [x] Impostos: vTotTrib, II, ISSQN, PISST/COFINSST, PIS/COFINS por quantidade,
+      IPI por unidade e com selo
+- [x] ICMS: CST 02/15/53/61 (monofasico), ICMSPart, ICMSST, ICMS efetivo,
+      indDeduzDeson, vICMSSTDeson, cBenefRBC, FCP diferido
+- [x] Totais: ISSQNtot, retTrib, ISTot, vNFTot, monofasico, vII, vIPIDevol, vTotTrib
+- [x] IBS/CBS completo: gDif, gRed, gDevTrib, gTribRegular, gTribCompraGov,
+      gIBSCBSMono, gTransfCred, gAjusteCompet, gEstornoCred, gCredPresOper,
+      gCredPresIBSZFM, indDoacao
+- [x] Imposto Seletivo (IS) no item e ISTot no total
+- [x] Builder dividido em modulos (`builders/nota-groups`, `produto-groups`,
+      `imposto-groups`, `ibscbs-groups`, `total-groups`)
+- [x] Cobertura medida por script contra o XSD: 566/566 elementos de emissao
+
+**Criterio de conclusao:** 100% dos elementos alcancaveis a partir de `infNFe` no
+XSD oficial sao emitidos, com teste de validacao XSD por grupo.
+
+---
+
 ## Fase 10: Contingencia e Resiliencia
 
 **Status:** Pendente
@@ -280,8 +340,10 @@ Este documento descreve as fases de desenvolvimento do projeto. Cada fase tem um
 
 - [ ] QR Code v3 (NT 2025.001) — formato simplificado que dispensa CSC para emissao online
 - [x] Grupo IBS/CBS na emissao (item gIBSCBS + total IBSCBSTot) — tributacao integral CST 000, valores por aliquota configuravel
-- [ ] Regimes especiais no item IBS/CBS (diferimento gDif, reducao gRed, monofasico, credito presumido)
+- [x] Regimes especiais no item IBS/CBS (diferimento gDif, reducao gRed, monofasico, credito presumido)
 - [ ] Eventos IBS/CBS (NT 2025.002) — pagamento integral, isencao ZFM, apropiacao de credito presumido
+- [ ] ECONF — Conciliacao Financeira (110750/110751), o evento pelo qual a liquidacao
+      e amarrada a nota no split payment (XSDs ja no pacote; falta implementar)
 - [ ] Protocolacao de Eventos — gerar `procEventoNFe` e `procInutNFe` (juntar XML com retorno SEFAZ)
 
 **Criterio de conclusao:** Lib compativel com as NTs mais recentes.

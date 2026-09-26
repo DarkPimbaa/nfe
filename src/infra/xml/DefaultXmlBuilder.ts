@@ -1,15 +1,47 @@
+import { createHash } from 'node:crypto';
 import { XmlBuilder } from '@nfe/contracts/XmlBuilder';
-import { NFeProps } from '@nfe/domain/entities/NFe';
+import {
+  NFeProps,
+  NFeIdentificacao,
+  NotaReferenciada,
+  CompraGovernamentalProps,
+  AutorizadoXml,
+  ResponsavelTecnico
+} from '@nfe/domain/entities/NFe';
 import { EmitenteProps } from '@nfe/domain/entities/Emitente';
 import { DestinatarioProps } from '@nfe/domain/entities/Destinatario';
 import { EnderecoProps } from '@nfe/domain/entities/Endereco';
 import { ProdutoProps } from '@nfe/domain/entities/Produto';
-import { TransporteProps } from '@nfe/domain/entities/Transporte';
 import { PagamentoProps } from '@nfe/domain/entities/Pagamento';
 import { CobrancaProps } from '@nfe/domain/entities/Cobranca';
 import { UF_CODES } from '@nfe/shared/constants/ibge-codes';
 import { generateAccessKey, generateNumericCode } from '@nfe/shared/helpers/access-key';
-import { tag, tagGroup, formatNumber, formatDate } from './xml-helper';
+import { tag, tagGroup, formatNumber, formatDate, formatDateOnly } from './xml-helper';
+import {
+  buildAvulsa,
+  buildLocal,
+  buildIntermediador,
+  buildExportacao,
+  buildCompra,
+  buildCana,
+  buildAgropecuario,
+  buildInformacoesAdicionais,
+  buildTransporte
+} from './builders/nota-groups';
+import {
+  buildNve,
+  buildCest,
+  buildCreditosPresumidos,
+  buildDeclaracoesImportacao,
+  buildDetalhesExportacao,
+  buildRastros,
+  buildProdutoEspecifico,
+  buildImpostoDevolvido,
+  buildObservacaoItem,
+  buildDFeReferenciado
+} from './builders/produto-groups';
+import { buildImpostos } from './builders/imposto-groups';
+import { buildTotais } from './builders/total-groups';
 
 const NFE_VERSION = '4.00';
 const NFE_NAMESPACE = 'http://www.portalfiscal.inf.br/nfe';
@@ -41,26 +73,43 @@ export class DefaultXmlBuilder implements XmlBuilder {
     const ambiente = (nfe.identificacao.ambiente ?? 2) as 1 | 2;
     const dest = this.buildDestinatario(nfe.destinatario, ambiente);
     const det = this.buildProdutos(nfe.produtos);
-    const total = this.buildTotais(nfe);
-    const transp = this.buildTransporte(nfe.transporte);
+    const total = buildTotais(nfe);
+    const transp = buildTransporte(nfe.transporte);
     const cobr = this.buildCobranca(nfe.cobranca);
     const pag = this.buildPagamento(nfe.pagamento);
-    const infAdic = this.buildInformacoesAdicionais(
-      nfe.informacoesComplementares,
-      nfe.informacoesFisco
-    );
+    const infAdic = buildInformacoesAdicionais({
+      complementar: nfe.informacoesComplementares,
+      fisco: nfe.informacoesFisco,
+      observacoesContribuinte: nfe.observacoesContribuinte,
+      observacoesFisco: nfe.observacoesFisco,
+      processosReferenciados: nfe.processosReferenciados
+    });
+
+    const autXml = this.buildAutXml(nfe.autorizadosXml);
+    const infRespTec = this.buildInfRespTec(nfe.responsavelTecnico, chaveAcesso);
 
     const infNFe =
       `<infNFe versao="${NFE_VERSION}" Id="NFe${chaveAcesso}">` +
       ide +
       emit +
+      buildAvulsa(nfe.avulsa) +
       dest +
+      buildLocal('retirada', nfe.retirada) +
+      buildLocal('entrega', nfe.entrega) +
+      autXml +
       det +
       total +
       transp +
       cobr +
       pag +
+      buildIntermediador(nfe.intermediador) +
       infAdic +
+      buildExportacao(nfe.exportacao) +
+      buildCompra(nfe.compra) +
+      buildCana(nfe.cana) +
+      infRespTec +
+      (nfe.solicitacaoNFF ? tagGroup('infSolicNFF', tag('xSolic', nfe.solicitacaoNFF)) : '') +
+      buildAgropecuario(nfe.agropecuario) +
       '</infNFe>';
 
     return (
@@ -93,18 +142,184 @@ export class DefaultXmlBuilder implements XmlBuilder {
         tag('serie', String(id.serie)) +
         tag('nNF', String(id.numero)) +
         tag('dhEmi', formatDate(dataEmissao)) +
+        tag('dhSaiEnt', id.dataSaidaEntrada ? formatDate(id.dataSaidaEntrada) : undefined) +
+        tag(
+          'dPrevEntrega',
+          id.dataPrevistaEntrega ? formatDateOnly(id.dataPrevistaEntrega) : undefined
+        ) +
         tag('tpNF', String(id.tipoOperacao)) +
         tag('idDest', String(id.destinoOperacao)) +
         tag('cMunFG', id.municipio) +
+        tag('cMunFGIBS', id.municipioFatoGeradorIbs) +
         tag('tpImp', String(tipoImpressao)) +
         tag('tpEmis', String(tipoEmissao)) +
         tag('cDV', cDV) +
         tag('tpAmb', tpAmb) +
         tag('finNFe', String(id.finalidade)) +
+        tag('tpNFDebito', id.tipoNotaDebito) +
+        tag('tpNFCredito', id.tipoNotaCredito) +
         tag('indFinal', String(id.consumidorFinal)) +
         tag('indPres', String(id.presencaComprador)) +
+        tag(
+          'indIntermed',
+          id.indicadorIntermediador !== undefined ? String(id.indicadorIntermediador) : undefined
+        ) +
         tag('procEmi', '0') +
-        tag('verProc', 'brasil-fiscal-nfe')
+        tag('verProc', 'brasil-fiscal-nfe') +
+        this.buildContingencia(id) +
+        this.buildNFref(id.notasReferenciadas) +
+        this.buildCompraGovernamental(id.compraGovernamental) +
+        this.buildPagAntecipado(id.pagamentosAntecipados)
+    );
+  }
+
+  /**
+   * Entrada em contingencia (dhCont + xJust). Sequencia opcional: os dois campos
+   * andam juntos, e sao exigidos quando `tipoEmissao` indica contingencia.
+   */
+  private buildContingencia(id: NFeIdentificacao): string {
+    if (!id.dataHoraContingencia || !id.justificativaContingencia) return '';
+
+    return (
+      tag('dhCont', formatDate(id.dataHoraContingencia)) +
+      tag('xJust', id.justificativaContingencia)
+    );
+  }
+
+  /**
+   * Compra governamental (gCompraGov), com o redutor de IBS/CBS do ente publico.
+   */
+  private buildCompraGovernamental(compra?: CompraGovernamentalProps): string {
+    if (!compra) return '';
+
+    return tagGroup(
+      'gCompraGov',
+      tag('tpEnteGov', String(compra.tipoEnte)) +
+        tag('pRedutor', formatNumber(compra.percentualRedutor, 4)) +
+        tag('tpOperGov', String(compra.tipoOperacao))
+    );
+  }
+
+  /**
+   * NFe de antecipacao de pagamento liquidadas por esta nota (gPagAntecipado).
+   * Fica depois do NFref, no fim do `ide`.
+   */
+  private buildPagAntecipado(chaves?: readonly string[]): string {
+    if (!chaves || chaves.length === 0) return '';
+
+    return tagGroup(
+      'gPagAntecipado',
+      chaves
+        .slice(0, 99)
+        .map((chave) => tag('refNFe', chave))
+        .join('')
+    );
+  }
+
+  /**
+   * Documentos referenciados (grupo NFref). Fica no fim do `ide`, conforme a
+   * sequencia do leiaute 4.00.
+   */
+  private buildNFref(refs?: readonly NotaReferenciada[]): string {
+    if (!refs || refs.length === 0) return '';
+
+    return refs
+      .map((ref) => {
+        switch (ref.tipo) {
+          case 'nfe':
+            return tagGroup('NFref', tag('refNFe', ref.chaveAcesso));
+
+          case 'nfeSigilosa':
+            return tagGroup('NFref', tag('refNFeSig', ref.chaveAcesso));
+
+          case 'cte':
+            return tagGroup('NFref', tag('refCTe', ref.chaveAcesso));
+
+          case 'nf':
+            return tagGroup(
+              'NFref',
+              tagGroup(
+                'refNF',
+                tag('cUF', UF_CODES[ref.uf] || ref.uf) +
+                  tag('AAMM', ref.anoMes) +
+                  tag('CNPJ', ref.cnpj) +
+                  tag('mod', ref.modelo) +
+                  tag('serie', String(ref.serie)) +
+                  tag('nNF', String(ref.numero))
+              )
+            );
+
+          case 'produtorRural':
+            return tagGroup(
+              'NFref',
+              tagGroup(
+                'refNFP',
+                tag('cUF', UF_CODES[ref.uf] || ref.uf) +
+                  tag('AAMM', ref.anoMes) +
+                  (ref.cnpj ? tag('CNPJ', ref.cnpj) : tag('CPF', ref.cpf)) +
+                  tag('IE', ref.inscricaoEstadual) +
+                  tag('mod', ref.modelo) +
+                  tag('serie', String(ref.serie)) +
+                  tag('nNF', String(ref.numero))
+              )
+            );
+
+          case 'ecf':
+            return tagGroup(
+              'NFref',
+              tagGroup(
+                'refECF',
+                tag('mod', ref.modelo) +
+                  tag('nECF', ref.numeroEcf) +
+                  tag('nCOO', ref.numeroContadorOrdem)
+              )
+            );
+        }
+      })
+      .join('');
+  }
+
+  /**
+   * Pessoas autorizadas a baixar o XML (grupo autXML), limitado a 10 pelo leiaute.
+   */
+  private buildAutXml(autorizados?: readonly AutorizadoXml[]): string {
+    if (!autorizados || autorizados.length === 0) return '';
+
+    return autorizados
+      .slice(0, 10)
+      .map((aut) =>
+        aut.cnpj
+          ? tagGroup('autXML', tag('CNPJ', aut.cnpj))
+          : tagGroup('autXML', tag('CPF', aut.cpf))
+      )
+      .join('');
+  }
+
+  /**
+   * Responsavel tecnico (grupo infRespTec). Quando o CSRT e informado, o
+   * `hashCSRT` e o SHA-1 de `CSRT + chave de acesso`, em base64.
+   */
+  private buildInfRespTec(resp: ResponsavelTecnico | undefined, chaveAcesso: string): string {
+    if (!resp) return '';
+
+    const csrt =
+      resp.csrt && resp.idCSRT
+        ? tag('idCSRT', resp.idCSRT) +
+          tag(
+            'hashCSRT',
+            createHash('sha1')
+              .update(resp.csrt + chaveAcesso, 'utf8')
+              .digest('base64')
+          )
+        : '';
+
+    return tagGroup(
+      'infRespTec',
+      tag('CNPJ', resp.cnpj) +
+        tag('xContato', resp.contato) +
+        tag('email', resp.email) +
+        tag('fone', resp.telefone) +
+        csrt
     );
   }
 
@@ -118,6 +333,7 @@ export class DefaultXmlBuilder implements XmlBuilder {
         tag('xFant', emit.nomeFantasia) +
         endereco +
         tag('IE', emit.inscricaoEstadual) +
+        tag('IEST', emit.inscricaoEstadualST) +
         tag('IM', emit.inscricaoMunicipal) +
         tag('CNAE', emit.cnae) +
         tag('CRT', String(emit.regimeTributario))
@@ -126,7 +342,13 @@ export class DefaultXmlBuilder implements XmlBuilder {
 
   private buildDestinatario(dest: DestinatarioProps | undefined, tpAmb: 1 | 2): string {
     if (!dest) return '';
-    const doc = dest.cnpj ? tag('CNPJ', dest.cnpj) : dest.cpf ? tag('CPF', dest.cpf) : '';
+    const doc = dest.cnpj
+      ? tag('CNPJ', dest.cnpj)
+      : dest.cpf
+        ? tag('CPF', dest.cpf)
+        : dest.idEstrangeiro
+          ? tag('idEstrangeiro', dest.idEstrangeiro)
+          : '';
     if (!doc) return '';
     const endereco = dest.endereco ? this.buildEndereco('enderDest', dest.endereco) : '';
     const xNome = tpAmb === 2
@@ -140,6 +362,8 @@ export class DefaultXmlBuilder implements XmlBuilder {
         endereco +
         tag('indIEDest', String(dest.indicadorIE)) +
         tag('IE', dest.inscricaoEstadual) +
+        tag('ISUF', dest.inscricaoSuframa) +
+        tag('IM', dest.inscricaoMunicipal) +
         tag('email', dest.email)
     );
   }
@@ -166,19 +390,28 @@ export class DefaultXmlBuilder implements XmlBuilder {
   }
 
   private buildProduto(prod: ProdutoProps, nItem: number): string {
+    // A ordem dos campos segue a sequencia do leiaute 4.00 — o XSD rejeita
+    // qualquer elemento fora de posicao.
     const prodTag = tagGroup(
       'prod',
       tag('cProd', prod.codigo) +
         tag('cEAN', prod.ean || 'SEM GTIN') +
+        tag('cBarra', prod.codigoBarras) +
         tag('xProd', prod.descricao) +
         tag('NCM', prod.ncm) +
-        tag('CEST', prod.cest) +
+        buildNve(prod.nve) +
+        buildCest(prod) +
+        tag('cBenef', prod.codigoBeneficioFiscal) +
+        buildCreditosPresumidos(prod.creditosPresumidos) +
+        tag('tpCredPresIBSZFM', prod.tipoCreditoPresumidoIbsZfm) +
+        tag('EXTIPI', prod.extipi) +
         tag('CFOP', prod.cfop) +
         tag('uCom', prod.unidade) +
         tag('qCom', formatNumber(prod.quantidade, 4)) +
         tag('vUnCom', formatNumber(prod.valorUnitario, 10)) +
         tag('vProd', formatNumber(prod.valorTotal, 2)) +
         tag('cEANTrib', prod.eanTributavel || 'SEM GTIN') +
+        tag('cBarraTrib', prod.codigoBarrasTributavel) +
         tag('uTrib', prod.unidade) +
         tag('qTrib', formatNumber(prod.quantidade, 4)) +
         tag('vUnTrib', formatNumber(prod.valorUnitario, 10)) +
@@ -186,351 +419,44 @@ export class DefaultXmlBuilder implements XmlBuilder {
         tag('vSeg', prod.valorSeguro ? formatNumber(prod.valorSeguro, 2) : undefined) +
         tag('vDesc', prod.valorDesconto ? formatNumber(prod.valorDesconto, 2) : undefined) +
         tag('vOutro', prod.outrasDespesas ? formatNumber(prod.outrasDespesas, 2) : undefined) +
-        tag('indTot', '1')
-    );
-
-    const imposto = this.buildImpostos(prod);
-
-    return tagGroup('det', prodTag + imposto, `nItem="${nItem}"`);
-  }
-
-  private buildImpostos(prod: ProdutoProps): string {
-    const icms = this.buildICMS(prod);
-    const ipi = this.buildIPI(prod);
-    const pis = this.buildPIS(prod);
-    const cofins = this.buildCOFINS(prod);
-    const ibscbs = this.buildIBSCBS(prod);
-
-    return tagGroup('imposto', icms + ipi + pis + cofins + ibscbs);
-  }
-
-  private buildIBSCBS(prod: ProdutoProps): string {
-    const ibs = prod.ibsCbs;
-    if (!ibs) return '';
-    const vBC = prod.valorTotal;
-    const vIBSUF = (ibs.pIBSUF / 100) * vBC;
-    const vIBSMun = (ibs.pIBSMun / 100) * vBC;
-    const vCBS = (ibs.pCBS / 100) * vBC;
-    const gIBSCBS = tagGroup(
-      'gIBSCBS',
-      tag('vBC', formatNumber(vBC, 2)) +
-        tagGroup('gIBSUF', tag('pIBSUF', formatNumber(ibs.pIBSUF, 4)) + tag('vIBSUF', formatNumber(vIBSUF, 2))) +
-        tagGroup('gIBSMun', tag('pIBSMun', formatNumber(ibs.pIBSMun, 4)) + tag('vIBSMun', formatNumber(vIBSMun, 2))) +
-        tagGroup('gCBS', tag('pCBS', formatNumber(ibs.pCBS, 4)) + tag('vCBS', formatNumber(vCBS, 2)))
-    );
-    return tagGroup('IBSCBS', tag('CST', ibs.cst) + tag('cClassTrib', ibs.cClassTrib) + gIBSCBS);
-  }
-
-  private buildICMS(prod: ProdutoProps): string {
-    const icms = prod.icms;
-    const orig = tag('orig', String(icms.origem));
-
-    // --- Simples Nacional (CSOSN) ---
-    if (icms.csosn) {
-      const csosn = icms.csosn;
-      // Só os CSOSN tributados (com crédito ou tributação própria) carregam vBC/pICMS/vICMS.
-      // Os demais (102/103/300/400 isenção/sem crédito, 500 ICMS já recolhido por ST) são
-      // apenas orig + CSOSN — emitir vBC/pICMS aqui quebra o schema.
-      const tributadoSN = ['101', '201', '900'].includes(csosn);
-      const valores = tributadoSN
-        ? (icms.baseCalculo !== undefined ? tag('vBC', formatNumber(icms.baseCalculo, 2)) : '') +
-          (icms.aliquota !== undefined ? tag('pICMS', formatNumber(icms.aliquota, 2)) : '') +
-          (icms.valor !== undefined ? tag('vICMS', formatNumber(icms.valor, 2)) : '')
-        : '';
-      return tagGroup('ICMS', tagGroup('ICMSSN' + csosn, orig + tag('CSOSN', csosn) + valores));
-    }
-
-    const cst = icms.cst || '00';
-
-    // --- Isento / não tributado / suspensão (40, 41, 50): só orig + CST ---
-    if (['40', '41', '50'].includes(cst)) {
-      return tagGroup('ICMS', tagGroup('ICMS' + cst, orig + tag('CST', cst)));
-    }
-
-    // --- ICMS cobrado anteriormente por ST (CST 60): orig + CST + valores retidos ---
-    // Quando o ERP não rastreia o retido, emite 0.00 (schema-válido para revenda de ST).
-    if (cst === '60') {
-      return tagGroup(
-        'ICMS',
-        tagGroup(
-          'ICMS60',
-          orig +
-            tag('CST', '60') +
-            tag('vBCSTRet', formatNumber(icms.baseCalculo ?? 0, 2)) +
-            tag('vICMSSTRet', formatNumber(icms.valor ?? 0, 2))
-        )
-      );
-    }
-
-    // --- Tributado (00, 20, 90, ...): comportamento padrão com base/alíquota/valor ---
-    return tagGroup(
-      'ICMS',
-      tagGroup(
-        'ICMS' + cst,
-        orig +
-          tag('CST', cst) +
-          tag('modBC', '3') +
-          (icms.baseCalculo !== undefined
-            ? tag('vBC', formatNumber(icms.baseCalculo, 2))
-            : tag('vBC', '0.00')) +
-          (icms.aliquota !== undefined ? tag('pICMS', formatNumber(icms.aliquota, 2)) : '') +
-          (icms.valor !== undefined ? tag('vICMS', formatNumber(icms.valor, 2)) : '')
-      )
-    );
-  }
-
-  private buildPIS(prod: ProdutoProps): string {
-    const pis = prod.pis;
-
-    const isNonTaxable = ['04', '05', '06', '07', '08', '09'].includes(pis.cst);
-
-    if (isNonTaxable) {
-      return tagGroup(
-        'PIS',
-        tagGroup('PISNT', tag('CST', pis.cst))
-      );
-    }
-
-    const isOutr = ['49', '50', '51', '52', '53', '54', '55', '56',
-      '60', '61', '62', '63', '64', '65', '66', '67',
-      '70', '71', '72', '73', '74', '75', '98', '99'].includes(pis.cst);
-
-    if (isOutr) {
-      return tagGroup(
-        'PIS',
-        tagGroup(
-          'PISOutr',
-          tag('CST', pis.cst) +
-            tag('vBC', formatNumber(pis.baseCalculo || 0, 2)) +
-            tag('pPIS', formatNumber(pis.aliquota || 0, 4)) +
-            tag('vPIS', formatNumber(pis.valor || 0, 2))
-        )
-      );
-    }
-
-    return tagGroup(
-      'PIS',
-      tagGroup(
-        'PISAliq',
-        tag('CST', pis.cst) +
-          tag('vBC', formatNumber(pis.baseCalculo || 0, 2)) +
-          tag('pPIS', formatNumber(pis.aliquota || 0, 4)) +
-          tag('vPIS', formatNumber(pis.valor || 0, 2))
-      )
-    );
-  }
-
-  private buildCOFINS(prod: ProdutoProps): string {
-    const cofins = prod.cofins;
-
-    const isNonTaxable = ['04', '05', '06', '07', '08', '09'].includes(cofins.cst);
-
-    if (isNonTaxable) {
-      return tagGroup(
-        'COFINS',
-        tagGroup('COFINSNT', tag('CST', cofins.cst))
-      );
-    }
-
-    const isOutr = ['49', '50', '51', '52', '53', '54', '55', '56',
-      '60', '61', '62', '63', '64', '65', '66', '67',
-      '70', '71', '72', '73', '74', '75', '98', '99'].includes(cofins.cst);
-
-    if (isOutr) {
-      return tagGroup(
-        'COFINS',
-        tagGroup(
-          'COFINSOutr',
-          tag('CST', cofins.cst) +
-            tag('vBC', formatNumber(cofins.baseCalculo || 0, 2)) +
-            tag('pCOFINS', formatNumber(cofins.aliquota || 0, 4)) +
-            tag('vCOFINS', formatNumber(cofins.valor || 0, 2))
-        )
-      );
-    }
-
-    return tagGroup(
-      'COFINS',
-      tagGroup(
-        'COFINSAliq',
-        tag('CST', cofins.cst) +
-          tag('vBC', formatNumber(cofins.baseCalculo || 0, 2)) +
-          tag('pCOFINS', formatNumber(cofins.aliquota || 0, 4)) +
-          tag('vCOFINS', formatNumber(cofins.valor || 0, 2))
-      )
-    );
-  }
-
-  private buildTotais(nfe: NFeProps): string {
-    let vProd = 0;
-    let vDesc = 0;
-    let vFrete = 0;
-    let vSeg = 0;
-    let vOutro = 0;
-    let vBC = 0;
-    let vICMS = 0;
-    let vIPI = 0;
-    let vPIS = 0;
-    let vCOFINS = 0;
-    let vBCIBSCBS = 0;
-    let vIBSUFTot = 0;
-    let vIBSMunTot = 0;
-    let vCBSTot = 0;
-    let temIbsCbs = false;
-
-    for (const prod of nfe.produtos) {
-      vProd += prod.valorTotal;
-      vDesc += prod.valorDesconto || 0;
-      vFrete += prod.valorFrete || 0;
-      vSeg += prod.valorSeguro || 0;
-      vOutro += prod.outrasDespesas || 0;
-      vBC += prod.icms.baseCalculo || 0;
-      vICMS += prod.icms.valor || 0;
-      vIPI += prod.ipi?.valor || 0;
-      vPIS += prod.pis.valor || 0;
-      vCOFINS += prod.cofins.valor || 0;
-      if (prod.ibsCbs) {
-        const b = prod.valorTotal;
-        vBCIBSCBS += b;
-        vIBSUFTot += (prod.ibsCbs.pIBSUF / 100) * b;
-        vIBSMunTot += (prod.ibsCbs.pIBSMun / 100) * b;
-        vCBSTot += (prod.ibsCbs.pCBS / 100) * b;
-        temIbsCbs = true;
-      }
-    }
-
-    const vNF = vProd - vDesc + vFrete + vSeg + vIPI + vOutro;
-
-    const icmsTot = tagGroup(
-      'ICMSTot',
-      tag('vBC', formatNumber(vBC, 2)) +
-        tag('vICMS', formatNumber(vICMS, 2)) +
-        tag('vICMSDeson', '0.00') +
-        tag('vFCPUFDest', '0.00') +
-        tag('vICMSUFDest', '0.00') +
-        tag('vICMSUFRemet', '0.00') +
-        tag('vFCP', '0.00') +
-        tag('vBCST', '0.00') +
-        tag('vST', '0.00') +
-        tag('vFCPST', '0.00') +
-        tag('vFCPSTRet', '0.00') +
-        tag('vProd', formatNumber(vProd, 2)) +
-        tag('vFrete', formatNumber(vFrete, 2)) +
-        tag('vSeg', formatNumber(vSeg, 2)) +
-        tag('vDesc', formatNumber(vDesc, 2)) +
-        tag('vII', '0.00') +
-        tag('vIPI', formatNumber(vIPI, 2)) +
-        tag('vIPIDevol', '0.00') +
-        tag('vPIS', formatNumber(vPIS, 2)) +
-        tag('vCOFINS', formatNumber(vCOFINS, 2)) +
-        tag('vOutro', formatNumber(vOutro, 2)) +
-        tag('vNF', formatNumber(vNF, 2))
-    );
-
-    const ibsCbsTot = !temIbsCbs
-      ? ''
-      : tagGroup(
-          'IBSCBSTot',
-          tag('vBCIBSCBS', formatNumber(vBCIBSCBS, 2)) +
-            tagGroup(
-              'gIBS',
-              tagGroup(
-                'gIBSUF',
-                tag('vDif', '0.00') +
-                  tag('vDevTrib', '0.00') +
-                  tag('vIBSUF', formatNumber(vIBSUFTot, 2))
-              ) +
-                tagGroup(
-                  'gIBSMun',
-                  tag('vDif', '0.00') +
-                    tag('vDevTrib', '0.00') +
-                    tag('vIBSMun', formatNumber(vIBSMunTot, 2))
-                ) +
-                tag('vIBS', formatNumber(vIBSUFTot + vIBSMunTot, 2))
-            ) +
-            tagGroup(
-              'gCBS',
-              tag('vDif', '0.00') +
-                tag('vDevTrib', '0.00') +
-                tag('vCBS', formatNumber(vCBSTot, 2))
+        tag('indTot', '1') +
+        tag('indBemMovelUsado', prod.bemMovelUsado ? '1' : undefined) +
+        buildDeclaracoesImportacao(prod.declaracoesImportacao) +
+        buildDetalhesExportacao(prod.detalhesExportacao) +
+        tag('xPed', prod.pedido) +
+        tag('nItemPed', prod.itemPedido !== undefined ? String(prod.itemPedido) : undefined) +
+        tag('nFCI', prod.fci) +
+        buildRastros(prod.rastros) +
+        (prod.produtoNFF
+          ? tagGroup(
+              'infProdNFF',
+              tag('cProdFisco', prod.produtoNFF.codigoFisco) +
+                tag('cOperNFF', prod.produtoNFF.codigoOperacao)
             )
-        );
-
-    return tagGroup('total', icmsTot + ibsCbsTot);
-  }
-
-  private buildTransporte(transp: TransporteProps): string {
-    let transportadora = '';
-    if (transp.cnpjTransportadora) {
-      transportadora = tagGroup(
-        'transporta',
-        tag('CNPJ', transp.cnpjTransportadora) +
-          tag('xNome', transp.nomeTransportadora) +
-          tag('IE', transp.inscricaoEstadual) +
-          tag('xEnder', transp.endereco) +
-          tag('xMun', transp.municipio) +
-          tag('UF', transp.uf)
-      );
-    }
-
-    let volumes = '';
-    if (transp.volumes) {
-      volumes = transp.volumes
-        .map((vol) =>
-          tagGroup(
-            'vol',
-            tag('qVol', vol.quantidade !== undefined ? String(vol.quantidade) : undefined) +
-              tag('esp', vol.especie) +
-              tag('marca', vol.marca) +
-              tag('nVol', vol.numeracao) +
-              tag('pesoL', vol.pesoLiquido !== undefined ? formatNumber(vol.pesoLiquido, 3) : undefined) +
-              tag('pesoB', vol.pesoBruto !== undefined ? formatNumber(vol.pesoBruto, 3) : undefined)
-          )
-        )
-        .join('');
-    }
-
-    let veiculo = '';
-    if (transp.veiculo) {
-      veiculo = tagGroup(
-        'veicTransp',
-        tag('placa', transp.veiculo.placa) +
-          tag('UF', transp.veiculo.uf) +
-          tag('RNTC', transp.veiculo.rntc)
-      );
-    }
-
-    return tagGroup(
-      'transp',
-      tag('modFrete', String(transp.modalidadeFrete)) + transportadora + veiculo + volumes
+          : '') +
+        (prod.embalagem
+          ? tagGroup(
+              'infProdEmb',
+              tag('xEmb', prod.embalagem.identificacao) +
+                tag('qVolEmb', formatNumber(prod.embalagem.volume, 3)) +
+                tag('uEmb', prod.embalagem.unidade)
+            )
+          : '') +
+        buildProdutoEspecifico(prod)
     );
-  }
 
-  private buildIPI(prod: ProdutoProps): string {
-    if (!prod.ipi) return '';
-
-    const ipi = prod.ipi;
-    const cEnq = ipi.cEnq || '999';
-    const nonTaxable = ['01', '02', '03', '04', '05', '51', '52', '53', '54', '55'];
-
-    if (nonTaxable.includes(ipi.cst)) {
-      return tagGroup(
-        'IPI',
-        tag('cEnq', cEnq) +
-          tagGroup('IPINT', tag('CST', ipi.cst))
-      );
-    }
+    const imposto = buildImpostos(prod);
 
     return tagGroup(
-      'IPI',
-      tag('cEnq', cEnq) +
-        tagGroup(
-          'IPITrib',
-          tag('CST', ipi.cst) +
-            tag('vBC', formatNumber(ipi.baseCalculo || 0, 2)) +
-            tag('pIPI', formatNumber(ipi.aliquota || 0, 2)) +
-            tag('vIPI', formatNumber(ipi.valor || 0, 2))
-        )
+      'det',
+      prodTag +
+        imposto +
+        buildImpostoDevolvido(prod.impostoDevolvido) +
+        tag('infAdProd', prod.informacoesAdicionais) +
+        buildObservacaoItem(prod.observacaoItem) +
+        tag('vItem', prod.valorItem !== undefined ? formatNumber(prod.valorItem, 2) : undefined) +
+        buildDFeReferenciado(prod.dfeReferenciado),
+      `nItem="${nItem}"`
     );
   }
 
@@ -568,14 +494,27 @@ export class DefaultXmlBuilder implements XmlBuilder {
   private buildPagamento(pag: PagamentoProps): string {
     const detPag = pag.pagamentos
       .map((p) => {
+        // Ordem exigida pelo leiaute: indPag, tPag, xPag, vPag, dPag,
+        // (CNPJPag + UFPag), card.
         let content =
-          tag('tPag', p.formaPagamento) + tag('vPag', formatNumber(p.valor, 2));
+          tag('indPag', p.indicadorPagamento !== undefined ? String(p.indicadorPagamento) : undefined) +
+          tag('tPag', p.formaPagamento) +
+          tag('xPag', p.descricao) +
+          tag('vPag', formatNumber(p.valor, 2)) +
+          tag('dPag', p.dataPagamento ? formatDateOnly(p.dataPagamento) : undefined);
+
+        // CNPJPag e UFPag formam uma sequencia opcional: ou os dois, ou nenhum.
+        if (p.cnpjPagador && p.ufPagador) {
+          content += tag('CNPJPag', p.cnpjPagador) + tag('UFPag', p.ufPagador);
+        }
 
         if (p.tipoIntegracao !== undefined) {
           let cardContent = tag('tpIntegra', String(p.tipoIntegracao));
           if (p.cnpjCredenciadora) cardContent += tag('CNPJ', p.cnpjCredenciadora);
           if (p.bandeira) cardContent += tag('tBand', p.bandeira);
           if (p.autorizacao) cardContent += tag('cAut', p.autorizacao);
+          if (p.cnpjRecebedor) cardContent += tag('CNPJReceb', p.cnpjRecebedor);
+          if (p.idTerminalPagamento) cardContent += tag('idTermPag', p.idTerminalPagamento);
           content += tagGroup('card', cardContent);
         }
 
@@ -591,15 +530,4 @@ export class DefaultXmlBuilder implements XmlBuilder {
     return tagGroup('pag', detPag + troco);
   }
 
-  private buildInformacoesAdicionais(
-    complementar?: string,
-    fisco?: string
-  ): string {
-    if (!complementar && !fisco) return '';
-
-    return tagGroup(
-      'infAdic',
-      tag('infAdFisco', fisco) + tag('infCpl', complementar)
-    );
-  }
 }

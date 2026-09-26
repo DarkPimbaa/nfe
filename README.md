@@ -33,6 +33,26 @@ npm install pdfkit
 - Geracao de DANFE em PDF (A4 retrato)
 - URLs de todos os 27 estados (14 autorizadores)
 - Providers plugaveis para certificado, transporte, XML e assinatura
+- Responsavel tecnico (`infRespTec`), com calculo do `hashCSRT`
+- Autorizados a baixar o XML (`autXML`)
+- Documentos referenciados (`NFref`) — NFe, CTe, nota em papel, produtor rural e ECF
+- DIFAL da EC 87/2015 (`ICMSUFDest`), com partilha e FCP
+- ICMS por CST: ST (10/30/70/90), reducao de base, desoneracao, diferimento (51)
+  e ST retido (60); CSOSN 101/201/202/500/900
+- Campos de pagamento do split payment (`dPag`, `CNPJPag`/`UFPag`, `CNPJReceb`,
+  `idTermPag`, `xPag`, `indPag`) e `gPagAntecipado`
+- Tabelas IBGE completas: 5.571 municipios e 248 paises, com busca por nome
+- Validacao XSD de eventos, inutilizacao, EPEC, consultas e distribuicao DFe
+- Leitura dos dados do certificado (titular, CNPJ, emissor, validade)
+- **Leiaute 4.00 completo**: 100% dos grupos de emissao do XSD oficial, incluindo
+  importacao (DI/adicoes), exportacao, rastreabilidade por lote, veiculos novos,
+  medicamentos, armas, combustiveis (CIDE/encerrante/biocombustivel), ISSQN,
+  II, PIS/COFINS ST, cana, agropecuario, contingencia, avulsa, intermediador
+- ICMS monofasico de combustiveis (CST 02, 15, 53, 61) e ICMS efetivo
+- IBS/CBS com todos os regimes: diferimento, reducao, monofasia, credito
+  presumido (inclusive ZFM), transferencia de credito, ajuste de competencia,
+  estorno, tributacao regular e compra governamental
+- Imposto Seletivo (IS) no item e no total
 
 ### NFC-e (modelo 65) — Em desenvolvimento
 
@@ -209,6 +229,205 @@ writeFileSync('danfe.pdf', pdf);
 ```
 
 > Requer `pdfkit` instalado: `npm install pdfkit`
+
+### Responsavel tecnico e autorizados a baixar o XML
+
+```typescript
+await nfe.transmitir({
+  // ...
+  responsavelTecnico: {
+    cnpj: '11222333000181',
+    contato: 'Suporte Tecnico',
+    email: 'suporte@empresa.com.br',
+    telefone: '6533334444',
+    // Opcional: com o CSRT a lib calcula o hashCSRT a partir da chave de acesso
+    idCSRT: '01',
+    csrt: 'G8063VRTNDMPM4TG4B8ZI4GZ5XY8CQ'
+  },
+  // Contador e transportador podem baixar o XML (ate 10)
+  autorizadosXml: [{ cnpj: '99888777000166' }, { cpf: '52998224725' }]
+});
+```
+
+### Nota referenciada (devolucao, complementar, ajuste)
+
+```typescript
+await nfe.transmitir({
+  identificacao: {
+    // ...
+    finalidade: 4, // devolucao
+    notasReferenciadas: [{ tipo: 'nfe', chaveAcesso: '5126...0015' }]
+  },
+  // ...
+});
+```
+
+Tambem aceita `{ tipo: 'cte' }`, `{ tipo: 'nf' }` (nota em papel modelo 01/02),
+`{ tipo: 'produtorRural' }` e `{ tipo: 'ecf' }`.
+
+### DIFAL — venda interestadual para consumidor final
+
+```typescript
+produtos: [
+  {
+    // ...
+    icms: { origem: 0, cst: '00', baseCalculo: 100, aliquota: 12, valor: 12 },
+    icmsUfDest: {
+      aliquotaInterna: 18,        // aliquota da UF de destino
+      aliquotaInterestadual: 12,  // 4, 7 ou 12
+      aliquotaFcp: 2              // opcional
+      // percentualPartilha: 100 (default desde 2019)
+    }
+  }
+]
+```
+
+A lib calcula `vICMSUFDest`, `vICMSUFRemet` e `vFCPUFDest` no item e soma tudo no
+grupo `ICMSTot`.
+
+### ICMS com substituicao tributaria
+
+```typescript
+icms: {
+  origem: 0,
+  cst: '10',
+  baseCalculo: 100,
+  aliquota: 17,
+  valor: 17,
+  percentualMva: 40,
+  baseCalculoST: 140,
+  aliquotaST: 17,
+  aliquotaFcpST: 2 // opcional
+}
+```
+
+Para mercadoria com ST ja retido (CST 60 / CSOSN 500):
+
+```typescript
+icms: {
+  origem: 0,
+  cst: '60',
+  baseCalculoSTRetido: 140,
+  aliquotaSTConsumidorFinal: 17,
+  valorSTRetido: 23.8
+}
+```
+
+### Pagamento e split payment
+
+Os campos abaixo sao os que amarram a nota a liquidacao financeira — e o que o
+prestador de servico de pagamento usa para identificar o documento fiscal e
+segregar IBS/CBS no split payment. Todos sao opcionais no leiaute 4.00.
+
+```typescript
+pagamento: {
+  pagamentos: [
+    {
+      indicadorPagamento: 0,        // indPag: 0 a vista, 1 a prazo
+      formaPagamento: '03',         // tPag: cartao de credito
+      valor: 100,
+      dataPagamento: new Date(),    // dPag
+      cnpjPagador: '11222333000181', // CNPJPag — onde o pagamento foi processado
+      ufPagador: 'MT',               // UFPag  — obrigatorio junto com CNPJPag
+      tipoIntegracao: 1,
+      cnpjCredenciadora: '99888777000166',
+      bandeira: '01',
+      autorizacao: 'A12345',
+      cnpjRecebedor: '44555666000177', // CNPJReceb — beneficiario do pagamento
+      idTerminalPagamento: 'POS-0001'  // idTermPag
+    }
+  ]
+}
+```
+
+`CNPJPag` e `UFPag` sao uma sequencia opcional no XSD: ou os dois, ou nenhum. O
+schema Zod rejeita a combinacao incompleta e o builder omite o par.
+
+Para nota que liquida pagamento antecipado:
+
+```typescript
+identificacao: {
+  // ...
+  pagamentosAntecipados: ['5126...0015'] // gPagAntecipado, ate 99 chaves
+}
+```
+
+### Grupos especializados de item
+
+```typescript
+produtos: [
+  {
+    // ... campos basicos
+    // Importacao
+    declaracoesImportacao: [{ numero: '2026/1234567', dataRegistro: new Date(), /* ... */ }],
+    // Rastreabilidade (obrigatoria para medicamento, alimento, bebida)
+    rastros: [{ lote: 'L123', quantidade: 2, dataFabricacao: new Date(), dataValidade: new Date() }],
+    // Produtos com regra propria — apenas um por item
+    medicamento: { codigoAnvisa: '1234567890123', precoMaximoConsumidor: 45.9 },
+    // veiculoNovo, armamentos, combustivel ou recopi
+  }
+]
+```
+
+### IBS/CBS com regimes especiais
+
+```typescript
+ibsCbs: {
+  cst: '200',
+  cClassTrib: '000002',
+  ibsUf: {
+    aliquota: 1,
+    reducao: { percentualReducao: 60, aliquotaEfetiva: 0.4 }  // gRed
+  },
+  ibsMun: { aliquota: 0.05, diferimento: { percentual: 50, valor: 0.02 } },  // gDif
+  cbs: { aliquota: 0.9, tributoDevolvido: 0.1 },                             // gDevTrib
+  creditoPresumido: {                                                        // gCredPresOper
+    baseCalculo: 100,
+    codigo: '01',
+    ibs: { percentual: 10, valor: 0.02 }
+  }
+}
+```
+
+Alternativas ao `gIBSCBS`, mutuamente exclusivas: `monofasia` (gIBSCBSMono),
+`transferenciaCredito` (gTransfCred) e `ajusteCompetencia` (gAjusteCompet).
+Os valores sao calculados pela aliquota efetiva quando ha reducao, e somados no
+`IBSCBSTot`.
+
+### Municipios e paises
+
+```typescript
+import { getMunicipio, findCodigoMunicipio, getUfDoMunicipio, getPais } from '@brasil-fiscal/nfe';
+
+getMunicipio('5103403');                  // 'Cuiabá'
+findCodigoMunicipio('SP', 'sao paulo');   // '3550308' (ignora acento e caixa)
+getUfDoMunicipio('3550308');              // 'SP'
+getPais('1058');                          // 'BRASIL'
+```
+
+### Dados do certificado
+
+```typescript
+const cert = await nfe.certificado();
+
+console.log(cert.titular);        // 'EMPRESA TESTE LTDA'
+console.log(cert.documento);      // '11222333000181'
+console.log(cert.notAfter);       // Date
+console.log(cert.diasParaVencer); // 137
+```
+
+### Validar XSD de outros documentos
+
+```typescript
+import { XsdSchemaValidator } from '@brasil-fiscal/nfe';
+
+const validator = new XsdSchemaValidator();
+
+validator.validate(xmlEvento, 'cancelamento');
+validator.validate(xmlEvento, 'cartaCorrecao');
+validator.validate(xmlInut, 'inutilizacao');
+validator.validate(xmlConsulta, 'consultaStatus');
+```
 
 ### Tratamento de erros
 

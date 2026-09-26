@@ -8,19 +8,103 @@ import {
 
 const DEFAULT_SCHEMAS_DIR = resolve(__dirname, '..', '..', '..', 'schemas');
 
-export class XsdSchemaValidator implements SchemaValidator {
-  private readonly schemaPath: string;
+/**
+ * Documentos da NFe que podem ser validados contra o XSD oficial.
+ *
+ * Cada tipo aponta para o schema raiz correspondente no pacote da SEFAZ. Os
+ * eventos com envelope proprio (cancelamento, CC-e, manifestacao, EPEC) tem o
+ * mesmo elemento raiz `envEvento`, mas schemas diferentes para o `detEvento`.
+ */
+export type SchemaDocument =
+  | 'nfe'
+  | 'enviNFe'
+  | 'procNFe'
+  | 'inutilizacao'
+  | 'procInutNFe'
+  | 'evento'
+  | 'procEvento'
+  | 'cancelamento'
+  | 'cancelamentoSubstituicao'
+  | 'cartaCorrecao'
+  | 'manifestacao'
+  | 'epec'
+  | 'comprovanteEntrega'
+  | 'insucessoEntrega'
+  | 'atorInteressado'
+  | 'consultaProtocolo'
+  | 'consultaStatus'
+  | 'consultaCadastro'
+  | 'consultaGTIN'
+  | 'distribuicaoDFe'
+  | 'downloadNFe';
 
-  constructor(schemasDir?: string) {
-    const dir = schemasDir ?? DEFAULT_SCHEMAS_DIR;
-    this.schemaPath = resolve(dir, 'nfe_v4.00.xsd');
+const SCHEMA_FILES: Record<SchemaDocument, string> = {
+  nfe: 'nfe_v4.00.xsd',
+  enviNFe: 'enviNFe_v4.00.xsd',
+  procNFe: 'procNFe_v4.00.xsd',
+  inutilizacao: 'inutNFe_v4.00.xsd',
+  procInutNFe: 'procInutNFe_v4.00.xsd',
+  evento: 'envEvento_v1.00.xsd',
+  procEvento: 'procEventoNFe_v1.00.xsd',
+  cancelamento: 'envEventoCancNFe_v1.00.xsd',
+  cancelamentoSubstituicao: 'envEventoCancSubst_v1.00.xsd',
+  cartaCorrecao: 'envCCe_v1.00.xsd',
+  manifestacao: 'envConfRecebto_v1.00.xsd',
+  epec: 'envEPEC_v1.00.xsd',
+  comprovanteEntrega: 'envEventoEntregaNFe_v1.00.xsd',
+  insucessoEntrega: 'envEventoInsucessoNFe_v1.00.xsd',
+  atorInteressado: 'envEventoAtorInteressado_v1.00.xsd',
+  consultaProtocolo: 'consSitNFe_v4.00.xsd',
+  consultaStatus: 'consStatServ_v4.00.xsd',
+  consultaCadastro: 'consCad_v2.00.xsd',
+  consultaGTIN: 'consGTIN_v1.00.xsd',
+  distribuicaoDFe: 'distDFeInt_v1.01.xsd',
+  downloadNFe: 'downloadNFe_v1.00.xsd'
+};
+
+export type XsdSchemaValidatorOptions = {
+  readonly schemasDir?: string;
+  readonly document?: SchemaDocument;
+};
+
+export class XsdSchemaValidator implements SchemaValidator {
+  private readonly schemasDir: string;
+  private readonly document: SchemaDocument;
+
+  /**
+   * @param options Diretorio dos schemas e documento padrao. Por compatibilidade,
+   *   tambem aceita apenas o diretorio como string.
+   */
+  constructor(options?: string | XsdSchemaValidatorOptions) {
+    const opts = typeof options === 'string' ? { schemasDir: options } : (options ?? {});
+
+    this.schemasDir = opts.schemasDir ?? DEFAULT_SCHEMAS_DIR;
+    this.document = opts.document ?? 'nfe';
   }
 
-  validate(xml: string): ValidationResult {
+  /**
+   * Caminho do XSD raiz de um documento.
+   */
+  schemaPathFor(document: SchemaDocument): string {
+    const file = SCHEMA_FILES[document];
+
+    if (!file) {
+      throw new Error(`Documento sem schema mapeado: ${document}`);
+    }
+
+    return resolve(this.schemasDir, file);
+  }
+
+  /**
+   * @param document Sobrescreve o documento padrao do validador.
+   */
+  validate(xml: string, document?: SchemaDocument): ValidationResult {
+    const schemaPath = this.schemaPathFor(document ?? this.document);
+
     try {
       execFileSync(
         'xmllint',
-        ['--noout', '--schema', this.schemaPath, '-'],
+        ['--noout', '--schema', schemaPath, '-'],
         {
           input: xml,
           stdio: ['pipe', 'pipe', 'pipe'],

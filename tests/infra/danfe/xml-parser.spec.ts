@@ -51,7 +51,10 @@ describe('xml-parser', () => {
 
   it('deve extrair transporte', () => {
     const data = parseNFeXml(SAMPLE_NFE_XML);
-    assert.ok(data.transporte.modalidade.includes('Sem Ocorrencia'));
+
+    // `modalidade` traz o codigo do modFrete; o texto do DANFE fica em `freteTexto`.
+    assert.equal(data.transporte.modalidade, '9');
+    assert.equal(data.transporte.freteTexto, '9-Sem Frete');
   });
 
   it('deve extrair protocolo', () => {

@@ -2,7 +2,8 @@ import { A1CertificateProvider } from '@nfe/infra/certificate/A1CertificateProvi
 import { DefaultXmlBuilder } from '@nfe/infra/xml/DefaultXmlBuilder';
 import { DefaultXmlSigner } from '@nfe/infra/xml/DefaultXmlSigner';
 import { NodeHttpSefazTransport } from '@nfe/infra/sefaz/NodeHttpSefazTransport';
-import { CertificateProvider } from '@nfe/contracts/CertificateProvider';
+import { CertificateProvider, CertificateInfo } from '@nfe/contracts/CertificateProvider';
+import { parseCertificateInfo } from '@brasil-fiscal/core';
 import { XmlBuilder } from '@nfe/contracts/XmlBuilder';
 import { XmlSigner } from '@nfe/contracts/XmlSigner';
 import { SefazTransport } from '@nfe/contracts/SefazTransport';
@@ -120,6 +121,15 @@ export class NFeCore {
 
   static create(config: NFeCoreConfig): NFeCore {
     return new NFeCore(config);
+  }
+
+  /**
+   * Dados do certificado configurado: titular, CNPJ/CPF, emissor, validade e
+   * quantos dias faltam para vencer.
+   */
+  async certificado(): Promise<CertificateInfo> {
+    const cert = await this.certificate.load();
+    return cert.info ?? parseCertificateInfo(cert.certPem);
   }
 
   async transmitir(nfe: NFeProps): Promise<TransmitResult> {
