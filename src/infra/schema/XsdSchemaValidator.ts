@@ -2,9 +2,9 @@ import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import {
   SchemaValidator,
-  ValidationResult,
-  ValidationError
+  ValidationResult
 } from '@nfe/contracts/SchemaValidator';
+import { parseXmllintErrors, fallbackValidationError } from './parse-xmllint-errors';
 
 const DEFAULT_SCHEMAS_DIR = resolve(__dirname, '..', '..', '..', 'schemas');
 
@@ -36,6 +36,8 @@ export type SchemaDocument =
   | 'consultaCadastro'
   | 'consultaGTIN'
   | 'distribuicaoDFe'
+  | 'retDistDFeInt'
+  | 'retConsGTIN'
   | 'downloadNFe';
 
 const SCHEMA_FILES: Record<SchemaDocument, string> = {
@@ -59,6 +61,8 @@ const SCHEMA_FILES: Record<SchemaDocument, string> = {
   consultaCadastro: 'consCad_v2.00.xsd',
   consultaGTIN: 'consGTIN_v1.00.xsd',
   distribuicaoDFe: 'distDFeInt_v1.01.xsd',
+  retDistDFeInt: 'retDistDFeInt_v1.01.xsd',
+  retConsGTIN: 'retConsGTIN_v1.00.xsd',
   downloadNFe: 'downloadNFe_v1.00.xsd'
 };
 
@@ -120,10 +124,10 @@ export class XsdSchemaValidator implements SchemaValidator {
         throw error;
       }
 
-      const errors = this.parseErrors(stderr);
+      const errors = parseXmllintErrors(stderr);
 
       if (errors.length === 0 && !stderr.includes('validates')) {
-        throw error;
+        return { valid: false, errors: [fallbackValidationError(stderr)] };
       }
 
       return { valid: false, errors };
@@ -140,25 +144,5 @@ export class XsdSchemaValidator implements SchemaValidator {
       return (error as Record<string, unknown>).stderr as string;
     }
     return null;
-  }
-
-  private parseErrors(stderr: string): ValidationError[] {
-    const errors: ValidationError[] = [];
-    const lines = stderr.split('\n');
-
-    for (const line of lines) {
-      const match = line.match(
-        /^-:(\d+):\s*element\s+(\S+):\s*Schemas validity error\s*:\s*(.+)$/
-      );
-
-      if (match) {
-        errors.push({
-          field: match[2],
-          message: match[3].trim()
-        });
-      }
-    }
-
-    return errors;
   }
 }

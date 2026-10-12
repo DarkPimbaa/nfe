@@ -6,7 +6,8 @@
 		</xs:annotation>
 		<xs:restriction base="xs:string">
 			<xs:whiteSpace value="preserve"/>
-			<xs:pattern value="[!-ÿ]{1}[ -ÿ]{0,}[!-ÿ]{1}|[!-ÿ]{1}"/>
+			<!-- @brasil-fiscal/nfe: `{0,}` normalizado para `*` (equivalente pela spec XSD 1.0; contorna bug do libxml2 antigo com quantificador {m,} ilimitado). Revisar no proximo sync com o pacote oficial SEFAZ. -->
+			<xs:pattern value="[!-ÿ]{1}[ -ÿ]*[!-ÿ]{1}|[!-ÿ]{1}"/>
 		</xs:restriction>
 	</xs:simpleType>
 	<xs:simpleType name="TStat">

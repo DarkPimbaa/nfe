@@ -125,9 +125,10 @@ describe('XsdSchemaValidator', () => {
   });
 
   it('deve retornar erros para XML malformado', () => {
-    assert.throws(() => {
-      validator.validate('<NFe><unclosed');
-    });
+    const result = validator.validate('<NFe><unclosed');
+
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.errors.length > 0);
   });
 
   it('deve retornar erros para XML com valor invalido em campo enum', async () => {
