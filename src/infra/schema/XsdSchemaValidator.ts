@@ -36,6 +36,8 @@ export type SchemaDocument =
   | 'consultaCadastro'
   | 'consultaGTIN'
   | 'distribuicaoDFe'
+  | 'retDistDFeInt'
+  | 'retConsGTIN'
   | 'downloadNFe';
 
 const SCHEMA_FILES: Record<SchemaDocument, string> = {
@@ -59,6 +61,8 @@ const SCHEMA_FILES: Record<SchemaDocument, string> = {
   consultaCadastro: 'consCad_v2.00.xsd',
   consultaGTIN: 'consGTIN_v1.00.xsd',
   distribuicaoDFe: 'distDFeInt_v1.01.xsd',
+  retDistDFeInt: 'retDistDFeInt_v1.01.xsd',
+  retConsGTIN: 'retConsGTIN_v1.00.xsd',
   downloadNFe: 'downloadNFe_v1.00.xsd'
 };
 
@@ -144,21 +148,41 @@ export class XsdSchemaValidator implements SchemaValidator {
 
   private parseErrors(stderr: string): ValidationError[] {
     const errors: ValidationError[] = [];
-    const lines = stderr.split('\n');
+    // xmllint no Windows termina as linhas com \r\n — o \r residual quebra
+    // o `$` final das expressoes (`.` nao casa `\r`).
+    const lines = stderr.split(/\r?\n/);
 
     for (const line of lines) {
-      const match = line.match(
+      // Formato antigo do xmllint: "-:12: element infNFe: Schemas validity error : ..."
+      const legacy = line.match(
         /^-:(\d+):\s*element\s+(\S+):\s*Schemas validity error\s*:\s*(.+)$/
       );
 
-      if (match) {
+      if (legacy) {
         errors.push({
-          field: match[2],
-          message: match[3].trim()
+          field: this.stripNamespace(legacy[2]),
+          message: legacy[3].trim()
+        });
+        continue;
+      }
+
+      // Formato atual do xmllint (libxml2 >= 2.9):
+      // "Element '{http://www.portalfiscal.inf.br/nfe}infNFe': Missing child element(s). ..."
+      const current = line.match(/^Element\s+'(?:\{[^}]*\})?([^':\s]+)'\s*:\s*(.+)$/);
+
+      if (current) {
+        errors.push({
+          field: current[1],
+          message: current[2].trim()
         });
       }
     }
 
     return errors;
+  }
+
+  private stripNamespace(name: string): string {
+    const match = name.match(/^\{[^}]*\}(.+)$/);
+    return match ? match[1] : name;
   }
 }
