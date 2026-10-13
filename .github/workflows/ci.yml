@@ -23,7 +23,7 @@ jobs:
       - name: Install system deps (xmllint/openssl for XSD + cert tests)
         run: sudo apt-get update && sudo apt-get install -y libxml2-utils openssl
 
-      - name: Install dependencies (workspaces: root + core)
+      - name: "Install dependencies (workspaces: root + core)"
         run: npm ci
 
       - name: Build core (dist/ nao e versionado)
