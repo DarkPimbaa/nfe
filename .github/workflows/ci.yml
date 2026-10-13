@@ -17,7 +17,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Node 24: o glob `tests/**/*.spec.ts` é expandido pelo próprio
+          # node --test (tsx repassa o padrão). No Node 20 o runner não
+          # entende glob e falha com "Could not find". Dev local usa v24.
+          node-version: 24
           cache: npm
 
       - name: Install system deps (xmllint/openssl for XSD + cert tests)
