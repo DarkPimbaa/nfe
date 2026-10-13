@@ -6,6 +6,8 @@ on:
   pull_request:
     branches: [main]
 
+# Monorepo: o nfe consome o workspace local ./core (linkado via npm workspaces,
+# um unico checkout resolve tudo — sem sibling checkout, sem pin externo).
 jobs:
   ci:
     runs-on: ubuntu-latest
@@ -18,11 +20,17 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Install system deps (xmllint for XSD validation)
-        run: sudo apt-get update && sudo apt-get install -y libxml2-utils
+      - name: Install system deps (xmllint/openssl for XSD + cert tests)
+        run: sudo apt-get update && sudo apt-get install -y libxml2-utils openssl
 
-      - name: Install dependencies
+      - name: Install dependencies (workspaces: root + core)
         run: npm ci
+
+      - name: Build core (dist/ nao e versionado)
+        run: npm run build:core
+
+      - name: Tests core
+        run: npm run test:core
 
       - name: Tests
         run: npm test
