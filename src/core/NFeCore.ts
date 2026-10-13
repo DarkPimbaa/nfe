@@ -10,6 +10,7 @@ import { SefazTransport } from '@nfe/contracts/SefazTransport';
 import { TransmitNFeUseCase } from '@nfe/application/use-cases/TransmitNFeUseCase';
 import { ConsultProtocolUseCase } from '@nfe/application/use-cases/ConsultProtocolUseCase';
 import { CancelaNFeUseCase } from '@nfe/application/use-cases/CancelaNFeUseCase';
+import { CancelaSubstituicaoUseCase } from '@nfe/application/use-cases/CancelaSubstituicaoUseCase';
 import { CartaCorrecaoUseCase } from '@nfe/application/use-cases/CartaCorrecaoUseCase';
 import { InutilizaNFeUseCase } from '@nfe/application/use-cases/InutilizaNFeUseCase';
 import { DistribuicaoDFeUseCase } from '@nfe/application/use-cases/DistribuicaoDFeUseCase';
@@ -43,6 +44,17 @@ export type CancelaInput = {
   readonly cnpj: string;
   readonly protocolo: string;
   readonly justificativa: string;
+};
+
+export type CancelaSubstituicaoInput = {
+  readonly chaveAcesso: string;
+  readonly cnpj: string;
+  readonly protocolo: string;
+  readonly justificativa: string;
+  /** Chave da NFC-e substituta (modelo 65, diferente da cancelada). */
+  readonly chaveSubstituta: string;
+  readonly cOrgaoAutor?: string;
+  readonly verAplic?: string;
 };
 
 export type CartaCorrecaoInput = {
@@ -132,6 +144,16 @@ export class NFeCore {
     return cert.info ?? parseCertificateInfo(cert.certPem);
   }
 
+  /**
+   * Transmite a NFe/NFC-e para a SEFAZ (modo síncrono, `indSinc=1`).
+   *
+   * Contrato de erro (estável, throw-only):
+   * - sucesso (cStat 100) → resolve com `{ autorizada: true, protocolo, ... }`;
+   * - rejeição SEFAZ → lança `SefazRejectError` (`cStat`/`xMotivo`/`uf`);
+   * - rede/timeout → propaga o erro original.
+   * Nunca retorna `{ autorizada: false }` — trate rejeição no `catch` e chame
+   * `consultarProtocolo(chave)` antes de reemitir (a numeração pode ter sido consumida).
+   */
   async transmitir(nfe: NFeProps): Promise<TransmitResult> {
     const ambiente = (nfe.identificacao?.ambiente ?? (this.environment === 'production' ? 1 : 2)) as 1 | 2;
     const modelo = nfe.identificacao.modelo ?? '55';
@@ -170,6 +192,20 @@ export class NFeCore {
 
   async cancelar(input: CancelaInput): Promise<EventoResult> {
     const useCase = new CancelaNFeUseCase({
+      certificate: this.certificate,
+      transport: this.transport,
+      xmlSigner: this.xmlSigner,
+      environment: this.environment
+    });
+    return useCase.execute(input);
+  }
+
+  /**
+   * Cancelamento por substituição de NFC-e (evento 110112, só modelo 65).
+   * Cancela a NFC-e errada referenciando a NFC-e correta (`chaveSubstituta`).
+   */
+  async cancelarSubstituicao(input: CancelaSubstituicaoInput): Promise<EventoResult> {
+    const useCase = new CancelaSubstituicaoUseCase({
       certificate: this.certificate,
       transport: this.transport,
       xmlSigner: this.xmlSigner,

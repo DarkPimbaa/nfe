@@ -4,6 +4,7 @@ import { CancelaNFeUseCase } from '@nfe/application/use-cases/CancelaNFeUseCase'
 import { SefazRejectError } from '@nfe/shared/errors/SefazRejectError';
 import { NFeError } from '@nfe/shared/errors/NFeError';
 import type { CertificateData } from '@nfe/contracts/CertificateProvider';
+import type { SefazRequest, SefazResponse } from '@nfe/contracts/SefazTransport';
 
 const fakeCert: CertificateData = {
   pfx: Buffer.from('fake-pfx'),
@@ -97,14 +98,14 @@ describe('CancelaNFeUseCase', () => {
     const chaveNFCe = '51240412345678000195650010000000011234567890';
     let capturedUrl = '';
     const useCase = new CancelaNFeUseCase({
-      certificate: { load: async () => fakeCert },
+      certificate: { load: async (): Promise<CertificateData> => fakeCert },
       transport: {
-        send: async (req) => {
+        send: async (req: SefazRequest): Promise<SefazResponse> => {
           capturedUrl = req.url;
           return { xml: buildSoapEventoResponse('135', 'Evento registrado', '151240000012345'), statusCode: 200 };
         }
       },
-      xmlSigner: { sign: (xml: string) => xml },
+      xmlSigner: { sign: (xml: string): string => xml },
       environment: 'homologation'
     });
 
@@ -121,14 +122,14 @@ describe('CancelaNFeUseCase', () => {
   it('deve enviar cancelamento de NF-e (mod55) para o endpoint de NF-e', async () => {
     let capturedUrl = '';
     const useCase = new CancelaNFeUseCase({
-      certificate: { load: async () => fakeCert },
+      certificate: { load: async (): Promise<CertificateData> => fakeCert },
       transport: {
-        send: async (req) => {
+        send: async (req: SefazRequest): Promise<SefazResponse> => {
           capturedUrl = req.url;
           return { xml: buildSoapEventoResponse('135', 'Evento registrado', '151240000012345'), statusCode: 200 };
         }
       },
-      xmlSigner: { sign: (xml: string) => xml },
+      xmlSigner: { sign: (xml: string): string => xml },
       environment: 'homologation'
     });
 

@@ -4,7 +4,8 @@
  * Uso: npx tsx --test tests/e2e/debug-nfce-encoding.e2e.ts
  */
 import { describe, it, before } from 'node:test';
-import { writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { NFeCore } from '@nfe/core/NFeCore';
 import type { NFeProps } from '@nfe/domain/entities/NFe';
 import { loadE2EConfig, loadPfxBuffer, E2EConfig } from './env-loader';
@@ -12,8 +13,6 @@ import { loadE2EConfig, loadPfxBuffer, E2EConfig } from './env-loader';
 const config = loadE2EConfig();
 
 function loadNFCeTokens(): { cIdToken: string; csc: string } | null {
-  const { readFileSync, existsSync } = require('node:fs');
-  const { resolve } = require('node:path');
   const envPath = resolve(process.cwd(), '.env');
   if (!existsSync(envPath)) return null;
   const content = readFileSync(envPath, 'utf-8') as string;
@@ -136,7 +135,7 @@ describe('DEBUG: NFC-e encoding com acentos', { skip: skipReason }, () => {
     const { DefaultXmlBuilder } = await import('@nfe/infra/xml/DefaultXmlBuilder');
     const { DefaultXmlSigner } = await import('@nfe/infra/xml/DefaultXmlSigner');
     const { A1CertificateProvider } = await import('@nfe/infra/certificate/A1CertificateProvider');
-    const { buildAutorizacaoEnvelope, SOAP_ACTIONS } = await import('@nfe/infra/sefaz/soap');
+    const { buildAutorizacaoEnvelope } = await import('@nfe/infra/sefaz/soap');
     const { buildNFCeQRCodeUrl, buildInfNFeSupl } = await import('@nfe/shared/helpers/nfce-qrcode');
     const { getNFCeQRCodeUrl, getNFCeConsultaUrl } = await import('@nfe/shared/constants/nfce-urls');
 
@@ -207,9 +206,10 @@ describe('DEBUG: NFC-e encoding com acentos', { skip: skipReason }, () => {
     try {
       const result = await nfce.transmitir(nfceData);
       console.log(`  SUCESSO: ${result.codigoStatus} - ${result.motivo}`);
-    } catch (err: any) {
-      console.log(`  ERRO: [${err.cStat}] ${err.xMotivo ?? err.message}`);
-      if (err.cStat === '402') {
+    } catch (err: unknown) {
+      const sefazErr = err as { cStat?: string; xMotivo?: string; message?: string };
+      console.log(`  ERRO: [${sefazErr.cStat}] ${sefazErr.xMotivo ?? sefazErr.message}`);
+      if (sefazErr.cStat === '402') {
         console.log('\n  !!! ERRO 402 PERSISTENTE !!!');
         console.log('  Analisar /tmp/nfce-debug-envelope.xml');
       }

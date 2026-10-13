@@ -306,7 +306,7 @@ XSD oficial sao emitidos, com teste de validacao XSD por grupo.
 
 - [ ] Gerenciamento de CSC (`CscNFCe`) — consultar (op=1), solicitar novo (op=2) e revogar (op=3) CSC de NFC-e
 - [ ] Consulta Cadastro (`NfeConsultaCadastro`) — dados de registro fiscal por CNPJ, IE ou CPF
-- [ ] Cancelamento por Substituicao (evento 110112) — cancela NFC-e referenciando a nova que substitui
+- [x] Cancelamento por Substituicao (evento 110112, só NFC-e) — `CancelaSubstituicaoUseCase` + `NFeCore.cancelarSubstituicao()` (XSD `envEventoCancSubst` já estava no pacote)
 - [ ] Manifestacao em Lote — ate 20 eventos de manifestacao em um unico envio SOAP
 - [ ] Tabela cStat completa — codigos de retorno SEFAZ (100-999) com descricao e tipo (sucesso/erro) *(no core, compartilhado)*
 - [ ] Validacao de NFe recebida — verifica assinatura XML + consulta protocolo para detectar adulteracao

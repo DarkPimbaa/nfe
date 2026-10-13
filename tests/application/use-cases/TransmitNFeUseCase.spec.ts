@@ -137,6 +137,51 @@ describe('TransmitNFeUseCase', () => {
     );
   });
 
+  it('deve lancar SefazRejectError com cStat/xMotivo preservados (ex: 204 duplicidade)', async () => {
+    const response = buildSoapAutorizacaoResponse(
+      '104', '204', 'Rejeicao: Duplicidade de NF-e'
+    );
+
+    const mocks = createMocks(response);
+    const useCase = new TransmitNFeUseCase({
+      ...mocks,
+      environment: 'homologation',
+      uf: 'MT'
+    });
+
+    await assert.rejects(
+      () => useCase.execute(fakeNFe),
+      (err: unknown) => {
+        assert.ok(err instanceof SefazRejectError);
+        assert.equal(err.cStat, '204');
+        assert.equal(err.xMotivo, 'Rejeicao: Duplicidade de NF-e');
+        assert.equal(err.uf, 'MT');
+        return true;
+      }
+    );
+  });
+
+  it('nunca retorna autorizada:false — rejeicao sempre lanca (contrato throw-only)', async () => {
+    const response = buildSoapAutorizacaoResponse(
+      '104', '539', 'Rejeicao: Duplicidade de NF-e'
+    );
+
+    const mocks = createMocks(response);
+    const useCase = new TransmitNFeUseCase({
+      ...mocks,
+      environment: 'homologation',
+      uf: 'MT'
+    });
+
+    let returned: unknown;
+    try {
+      returned = await useCase.execute(fakeNFe);
+    } catch (err) {
+      assert.ok(err instanceof SefazRejectError);
+    }
+    assert.equal(returned, undefined);
+  });
+
   it('deve propagar erro do transport', async () => {
     const mocks = createMocks('');
     mocks.transport = {

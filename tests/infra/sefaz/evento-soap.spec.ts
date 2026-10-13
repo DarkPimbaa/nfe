@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   buildCancelamentoXml,
+  buildCancelamentoSubstituicaoXml,
   buildCartaCorrecaoXml,
   buildInutilizacaoXml,
   wrapEventoSoapEnvelope,
@@ -11,6 +12,8 @@ import {
 } from '@nfe/infra/sefaz/evento-soap';
 
 const CHAVE = '51240412345678000195550010000000011234567890';
+const CHAVE_NFCE = '51240412345678000195650010000000011234567890';
+const CHAVE_NFCE_REF = '51240412345678000195650010000000021234567890';
 
 describe('evento-soap', () => {
   describe('buildCancelamentoXml', () => {
@@ -26,6 +29,25 @@ describe('evento-soap', () => {
       assert.ok(xml.includes('<nProt>151240000012345</nProt>'));
       assert.ok(xml.includes('<xJust>Erro na emissao da nota fiscal</xJust>'));
       assert.ok(xml.includes('<cOrgao>51</cOrgao>'));
+    });
+  });
+
+  describe('buildCancelamentoSubstituicaoXml', () => {
+    it('deve gerar XML de substituicao com tpEvento 110112 e chNFeRef', () => {
+      const xml = buildCancelamentoSubstituicaoXml(
+        CHAVE_NFCE, '12345678000195', '51', '2',
+        '151240000012345', 'Erro na emissao da nota fiscal', CHAVE_NFCE_REF,
+        '51', '1.0.0', '2024-04-29T10:00:00-04:00'
+      );
+
+      assert.ok(xml.includes('<tpEvento>110112</tpEvento>'));
+      assert.ok(xml.includes(`Id="ID110112${CHAVE_NFCE}01"`));
+      assert.ok(xml.includes('<descEvento>Cancelamento por substituicao</descEvento>'));
+      assert.ok(xml.includes(`<chNFeRef>${CHAVE_NFCE_REF}</chNFeRef>`));
+      assert.ok(xml.includes('<cOrgaoAutor>51</cOrgaoAutor>'));
+      assert.ok(xml.includes('<tpAutor>1</tpAutor>'));
+      assert.ok(xml.includes('<verAplic>1.0.0</verAplic>'));
+      assert.ok(xml.includes('<nProt>151240000012345</nProt>'));
     });
   });
 

@@ -29,6 +29,23 @@ Obrigado por considerar contribuir! Este guia explica como participar do projeto
 6. Commit seguindo o padrao de commits
 7. Abra um PR para `main`
 
+### Setup local (monorepo)
+
+Clone único — o `@brasil-fiscal/core` é o workspace `./core`, linkado via
+`workspaces` no `package.json`:
+
+```
+nfe/          ← este repo (pacote @brasil-fiscal/nfe na raiz)
+  core/       ← pacote @brasil-fiscal/core (fonte local, evolve junto)
+  src/ tests/ schemas/ docs/ …
+```
+
+- `npm install` na raiz instala tudo (root + core, hoisted).
+- O `dist/` do core não é versionado: rode `npm run build:core` antes de
+  `npm test` / `npm run build` (o CI faz nessa ordem).
+- Testes do core: `npm run test:core`.
+- O `npm run check:pub` barra links dangling no lock e `file:` no `package.json`.
+
 ## Code Style
 
 ### TypeScript
@@ -86,6 +103,14 @@ test: add unit tests for CNPJ validation
 - Nomeie testes descritivamente: `'should generate valid access key with 44 digits'`
 - Mock contracts, nao implementacoes concretas
 - Testes ficam em `tests/` espelhando a estrutura de `src/`
+
+### Release e paridade fonte x publicado
+
+- `dist/` é git-ignorado e rebuildado a cada release via `prepublishOnly` (`npm run build`).
+- Nunca publique tarball manual nem com `--ignore-scripts` — foi assim que a publicada saiu stale.
+- Toda release exige `npm test` + `npm run lint` + `npm run build` + `npm run check:pub` verdes.
+- O CI (`.github/workflows/ci.yml`) roda essa mesma sequência e quebra se o `dist` estiver
+  stale (sem `certificado`/`manifestar`) ou se o `npm pack` não incluir `dist/` + `schemas/`.
 
 ## Estrutura de um PR
 

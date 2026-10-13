@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -25,19 +25,46 @@ export function generateTestCertificate(options?: TestCertificateOptions): TestC
   const pfxPath = join(tmpDir, 'cert.pfx');
 
   try {
+    // Sem shell: argumentos em array, sem risco de injecao via cn/password.
+    const execOptions = { stdio: 'pipe' } as const;
     // Generate private key
-    execSync(`openssl genrsa -out "${keyPath}" 2048 2>/dev/null`);
+    execFileSync('openssl', ['genrsa', '-out', keyPath, '2048'], execOptions);
 
     // Generate self-signed certificate
-    execSync(
-      `openssl req -new -x509 -key "${keyPath}" -out "${certPath}" -days ${days} ` +
-      `-subj "/CN=${cn}/O=Test/C=BR" 2>/dev/null`
+    execFileSync(
+      'openssl',
+      [
+        'req',
+        '-new',
+        '-x509',
+        '-key',
+        keyPath,
+        '-out',
+        certPath,
+        '-days',
+        String(days),
+        '-subj',
+        `/CN=${cn}/O=Test/C=BR`
+      ],
+      execOptions
     );
 
     // Export to PKCS#12 (.pfx)
-    execSync(
-      `openssl pkcs12 -export -out "${pfxPath}" -inkey "${keyPath}" -in "${certPath}" ` +
-      `-passout pass:${password} 2>/dev/null`
+    execFileSync(
+      'openssl',
+      [
+        'pkcs12',
+        '-export',
+        '-out',
+        pfxPath,
+        '-inkey',
+        keyPath,
+        '-in',
+        certPath,
+        '-passout',
+        `pass:${password}`
+      ],
+      execOptions
     );
 
     const pfx = readFileSync(pfxPath);

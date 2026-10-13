@@ -351,6 +351,53 @@ icms: {
 }
 ```
 
+### Simples Nacional: o mínimo por CSOSN
+
+Para NFC-e/NFe do Simples Nacional no MVP (N1), o mínimo que passa no XSD:
+
+| CSOSN | Quando usar | ICMS | PIS/COFINS |
+|---|---|---|---|
+| `102` | Revenda sem ST, sem crédito | `icms: { origem, csosn: '102' }` (sem base/alíquota) | `pis/cofins: { cst: '49' }` → gera `PISOutr`/`COFINSOutr` |
+| `500` | Mercadoria com ST já retido | `icms: { origem, csosn: '500' }` + `baseCalculoSTRetido`, `aliquotaSTConsumidorFinal`, `valorSTRetido` (+ `efetivo` com o imposto real, quando houver) | `pis/cofins: { cst: '49' }` |
+
+```typescript
+// CSOSN 102 — revenda simples (ex.: padaria, varejo)
+{
+  numero: 1,
+  codigo: '001',
+  descricao: 'Pao frances kg',
+  ncm: '19059090',
+  cfop: '5102',
+  unidade: 'KG',
+  quantidade: 1,
+  valorUnitario: 12.0,
+  valorTotal: 12.0,
+  icms: { origem: 0, csosn: '102' },
+  pis: { cst: '49' },
+  cofins: { cst: '49' }
+}
+
+// CSOSN 500 — ST retido anteriormente (ex.: refrigerante, cigarro)
+{
+  // ... mesmos campos básicos
+  icms: {
+    origem: 0,
+    csosn: '500',
+    baseCalculoSTRetido: 10.0,
+    aliquotaSTConsumidorFinal: 17,
+    valorSTRetido: 1.7
+  },
+  pis: { cst: '49' },
+  cofins: { cst: '49' }
+}
+```
+
+Notas: `CSOSN 101/201/900` dão crédito de ICMS — exigem `aliquotaCreditoSN`
+e análise por operação (ver contador, fora do MVP). `PIS/COFINS 49` e `IBS 000`
+são a simplificação de homolog do MVP; o N2 refina por operação. Em dúvida,
+não chute CST — confirme com o contador. Ver exemplos NFC-e completos em
+[docs/EXAMPLES.md](docs/EXAMPLES.md).
+
 ### Pagamento e split payment
 
 Os campos abaixo sao os que amarram a nota a liquidacao financeira — e o que o
@@ -469,15 +516,23 @@ validator.validate(xmlConsulta, 'consultaStatus');
 
 ### Tratamento de erros
 
+Contrato do `transmitir` (estável, throw-only): sucesso (cStat 100) resolve com
+`{ autorizada: true }`; rejeição SEFAZ lança `SefazRejectError` com `cStat`/`xMotivo`;
+falha de rede/timeout propaga o erro original. A lib **nunca retorna
+`{ autorizada: false }`** — trate a nota rejeitada no `catch` e chame
+`consultarProtocolo(chave)` antes de reemitir.
+
 ```typescript
 import { SefazRejectError, CertificateError, NFeError } from '@brasil-fiscal/nfe';
 
 try {
-  await nfe.transmitir(nfeData);
+  const result = await nfe.transmitir(nfeData);
+  console.log(result.autorizada); // sempre true aqui (cStat 100)
 } catch (error) {
   if (error instanceof CertificateError) {
     console.error('Certificado:', error.message);
   } else if (error instanceof SefazRejectError) {
+    // Nota rejeitada (ex: 539 duplicidade): não reemitir sem consultar antes.
     console.error(`[${error.cStat}] ${error.xMotivo}`);
   } else if (error instanceof NFeError) {
     console.error('Erro:', error.message);

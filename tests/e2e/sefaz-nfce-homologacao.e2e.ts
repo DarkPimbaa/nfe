@@ -1,5 +1,7 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { NFeCore } from '@nfe/core/NFeCore';
 import type { NFeProps } from '@nfe/domain/entities/NFe';
 import { loadE2EConfig, loadPfxBuffer, E2EConfig } from './env-loader';
@@ -7,8 +9,6 @@ import { loadE2EConfig, loadPfxBuffer, E2EConfig } from './env-loader';
 const config = loadE2EConfig();
 
 function loadNFCeTokens(): { cIdToken: string; csc: string } | null {
-  const { readFileSync, existsSync } = require('node:fs');
-  const { resolve } = require('node:path');
   const envPath = resolve(process.cwd(), '.env');
   if (!existsSync(envPath)) return null;
 

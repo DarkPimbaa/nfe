@@ -34,6 +34,15 @@ function toSefazEnv(env: NFeEnvironment): SefazEnvironment {
 export class TransmitNFeUseCase {
   constructor(private readonly deps: TransmitDeps) {}
 
+  /**
+   * Contrato de erro (estável, throw-only):
+   * - resolve com `{ autorizada: true }` quando a SEFAZ retorna cStat 100;
+   * - rejeição SEFAZ (lote cStat != 104 ou protNFe cStat != 100) lança
+   *   `SefazRejectError` com `cStat`, `xMotivo` e `uf` preservados;
+   * - falha de rede/timeout propaga o erro original (não vira `SefazRejectError`).
+   * A lib nunca retorna `{ autorizada: false }` nesta versão — quem chama deve
+   * tratar rejeição no `catch` e chamar `consultarProtocolo` antes de reemitir.
+   */
   async execute(nfe: NFeProps): Promise<TransmitResult> {
     const { xmlBuilder, xmlSigner, certificate, transport, environment, uf, cIdToken, csc } =
       this.deps;

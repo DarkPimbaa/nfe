@@ -4,6 +4,7 @@ export type {
   NFeCoreConfig,
   NFeAmbiente,
   CancelaInput,
+  CancelaSubstituicaoInput,
   CartaCorrecaoInput,
   InutilizaInput,
   ManifestacaoInput
@@ -138,6 +139,7 @@ export { DistribuicaoDFeUseCase } from './application/use-cases/DistribuicaoDFeU
 export type { DistribuicaoResult, DFeDocument } from './application/use-cases/DistribuicaoDFeUseCase';
 export { CancelaNFeUseCase } from './application/use-cases/CancelaNFeUseCase';
 export type { EventoResult } from './application/use-cases/CancelaNFeUseCase';
+export { CancelaSubstituicaoUseCase } from './application/use-cases/CancelaSubstituicaoUseCase';
 export { CartaCorrecaoUseCase } from './application/use-cases/CartaCorrecaoUseCase';
 export { InutilizaNFeUseCase } from './application/use-cases/InutilizaNFeUseCase';
 export type { InutilizacaoResult } from './application/use-cases/InutilizaNFeUseCase';

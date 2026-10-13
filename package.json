@@ -13,11 +13,14 @@
     "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test": "tsx --test tests/**/*.spec.ts",
-    "test:e2e": "tsx --test tests/e2e/*.e2e.ts",
+    "test": "tsx --test \"tests/**/*.spec.ts\"",
+    "test:e2e": "tsx --test \"tests/e2e/*.e2e.ts\"",
     "emitir": "tsx tests/e2e/emitir-danfe.ts",
     "validar": "tsx tests/e2e/validar-xsd.ts",
     "prepublishOnly": "npm run build",
+    "check:pub": "node scripts/check-publish.js",
+    "build:core": "npm run build --workspace=@brasil-fiscal/core",
+    "test:core": "npm test --workspace=@brasil-fiscal/core",
     "publish:npm": "npm publish --access public --registry=https://registry.npmjs.org",
     "publish:github": "npm publish --registry=https://npm.pkg.github.com",
     "publish:all": "npm run publish:npm && npm run publish:github"
@@ -51,6 +54,9 @@
     "node": ">=18.0.0"
   },
   "type": "commonjs",
+  "workspaces": [
+    "core"
+  ],
   "devDependencies": {
     "@types/node": "^25.6.0",
     "@typescript-eslint/eslint-plugin": "^8.58.2",
