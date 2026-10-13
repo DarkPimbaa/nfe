@@ -2,8 +2,10 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { TransmitNFeUseCase } from '@nfe/application/use-cases/TransmitNFeUseCase';
 import { NFeProps } from '@nfe/domain/entities/NFe';
+import type { CertificateData } from '@nfe/contracts/CertificateProvider';
+import type { SefazRequest, SefazResponse } from '@nfe/contracts/SefazTransport';
 
-const mockCert = {
+const mockCert: CertificateData = {
   pfx: Buffer.from('mock'),
   password: 'mock',
   notAfter: new Date('2030-01-01'),
@@ -45,9 +47,11 @@ const sampleNFCe: NFeProps = {
   pagamento: { pagamentos: [{ formaPagamento: '01', valor: 10.00 }] }
 };
 
-function createMockTransport(captureUrl: (url: string) => void) {
+function createMockTransport(captureUrl: (url: string) => void): {
+  send: (req: SefazRequest) => Promise<SefazResponse>;
+} {
   return {
-    send: async (req: { url: string; soapAction: string; xml: string; pfx: Buffer; password: string }) => {
+    send: async (req: SefazRequest): Promise<SefazResponse> => {
       captureUrl(req.url);
       return {
         xml: '<soap12:Envelope><soap12:Body>' +
@@ -65,10 +69,10 @@ function createMockTransport(captureUrl: (url: string) => void) {
   };
 }
 
-function createMockBuilder(modelo: string) {
+function createMockBuilder(modelo: string): { build: () => string } {
   const mod = modelo;
   return {
-    build: () =>
+    build: (): string =>
       '<NFe xmlns="http://www.portalfiscal.inf.br/nfe">' +
       `<infNFe versao="4.00" Id="NFe51260411222333000181${mod === '65' ? '65' : '55'}0010000000011123456780">` +
       `<ide><mod>${mod}</mod><dhEmi>2026-04-28T10:00:00-03:00</dhEmi></ide>` +
@@ -77,9 +81,9 @@ function createMockBuilder(modelo: string) {
   };
 }
 
-function createMockSigner() {
+function createMockSigner(): { sign: (xml: string) => string } {
   return {
-    sign: (xml: string) => xml.replace(
+    sign: (xml: string): string => xml.replace(
       '</infNFe></NFe>',
       '</infNFe><Signature xmlns="http://www.w3.org/2000/09/xmldsig#">' +
       '<SignedInfo><DigestMethod/></SignedInfo>' +
@@ -99,7 +103,7 @@ describe('TransmitNFeUseCase - NFC-e', () => {
     const useCase = new TransmitNFeUseCase({
       xmlBuilder: createMockBuilder('65'),
       xmlSigner: createMockSigner(),
-      certificate: { load: async () => mockCert },
+      certificate: { load: async (): Promise<CertificateData> => mockCert },
       transport: createMockTransport((url) => { capturedUrl = url; }),
       environment: 'homologation',
       uf: 'MT',
@@ -121,7 +125,7 @@ describe('TransmitNFeUseCase - NFC-e', () => {
     const useCase = new TransmitNFeUseCase({
       xmlBuilder: createMockBuilder('55'),
       xmlSigner: createMockSigner(),
-      certificate: { load: async () => mockCert },
+      certificate: { load: async (): Promise<CertificateData> => mockCert },
       transport: createMockTransport((url) => { capturedUrl = url; }),
       environment: 'homologation',
       uf: 'MT'
@@ -136,7 +140,7 @@ describe('TransmitNFeUseCase - NFC-e', () => {
     const useCase = new TransmitNFeUseCase({
       xmlBuilder: createMockBuilder('65'),
       xmlSigner: createMockSigner(),
-      certificate: { load: async () => mockCert },
+      certificate: { load: async (): Promise<CertificateData> => mockCert },
       transport: createMockTransport(() => {}),
       environment: 'homologation',
       uf: 'MT',
@@ -158,7 +162,7 @@ describe('TransmitNFeUseCase - NFC-e', () => {
     const useCase = new TransmitNFeUseCase({
       xmlBuilder: createMockBuilder('55'),
       xmlSigner: createMockSigner(),
-      certificate: { load: async () => mockCert },
+      certificate: { load: async (): Promise<CertificateData> => mockCert },
       transport: createMockTransport(() => {}),
       environment: 'homologation',
       uf: 'MT'

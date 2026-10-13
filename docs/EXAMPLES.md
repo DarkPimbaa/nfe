@@ -457,6 +457,43 @@ console.log(result.cStat); // '135' = evento registrado
 
 ---
 
+## 5b. Cancelamento por substituição de NFC-e (110112)
+
+Só NFC-e (modelo 65): a NFC-e errada é cancelada referenciando a NFC-e correta
+que a substitui. Emita primeiro a NFC-e correta, depois cancele a errada.
+
+```typescript
+import { CancelaSubstituicaoUseCase } from '@brasil-fiscal/nfe';
+
+const substituir = new CancelaSubstituicaoUseCase({
+  certificate,
+  transport,
+  xmlSigner,
+  environment: 'homologation'
+});
+
+const result = await substituir.execute({
+  chaveAcesso: '51240412345678000195650010000000011234567890', // NFC-e errada
+  cnpj: '12345678000195',
+  protocolo: '151240000012345',
+  justificativa: 'Erro na emissao da nota fiscal eletronica',  // minimo 15 caracteres
+  chaveSubstituta: '51240412345678000195650010000000021234567890' // NFC-e correta
+});
+
+console.log(result.cStat); // '135' = evento registrado
+
+// Via fachada:
+await core.cancelarSubstituicao({
+  chaveAcesso: '51240412345678000195650010000000011234567890',
+  cnpj: '12345678000195',
+  protocolo: '151240000012345',
+  justificativa: 'Erro na emissao da nota fiscal eletronica',
+  chaveSubstituta: '51240412345678000195650010000000021234567890'
+});
+```
+
+---
+
 ## 6. Carta de Correcao (CC-e)
 
 ```typescript
@@ -606,6 +643,10 @@ writeFileSync('danfe.pdf', pdf);
 
 ## 11. Tratamento de erros
 
+Contrato do `transmitir`/`execute` (estável, throw-only): cStat 100 resolve com
+`{ autorizada: true }`; qualquer rejeição SEFAZ lança `SefazRejectError`;
+rede/timeout propaga o erro original. Não existe retorno `{ autorizada: false }`.
+
 ```typescript
 import {
   SchemaValidationError,
@@ -616,12 +657,13 @@ import {
 
 try {
   const result = await transmitir.execute(nfeData);
+  console.log(result.autorizada); // sempre true aqui (cStat 100)
 } catch (error) {
   if (error instanceof CertificateError) {
     // Certificado expirado, senha incorreta, arquivo invalido
     console.error('Erro no certificado:', error.message);
   } else if (error instanceof SefazRejectError) {
-    // SEFAZ rejeitou (ex: duplicidade, dados invalidos)
+    // SEFAZ rejeitou (ex: 539 duplicidade, 204 duplicidade): consultar antes de reemitir
     console.error(`[${error.cStat}] ${error.xMotivo}`);
   } else if (error instanceof NFeError) {
     // Erro generico da lib (timeout, XML invalido, etc)

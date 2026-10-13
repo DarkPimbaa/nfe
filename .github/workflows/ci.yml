@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install system deps (xmllint for XSD validation)
+        run: sudo apt-get update && sudo apt-get install -y libxml2-utils
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Tests
+        run: npm test
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Parity fonte x publicado (dist fresco + pacote completo)
+        run: npm run check:pub
+
+      - name: Pack inclui dist + schemas
+        run: |
+          PACK_LIST=$(npm pack --dry-run 2>&1)
+          echo "$PACK_LIST" | grep -q "dist/" || (echo "npm pack sem dist/" && exit 1)
+          echo "$PACK_LIST" | grep -q "schemas/" || (echo "npm pack sem schemas/" && exit 1)

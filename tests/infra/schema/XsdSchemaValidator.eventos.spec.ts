@@ -7,6 +7,7 @@ import { A1CertificateProvider } from '@nfe/infra/certificate/A1CertificateProvi
 import { CertificateData } from '@nfe/contracts/CertificateProvider';
 import {
   buildCancelamentoXml,
+  buildCancelamentoSubstituicaoXml,
   buildCartaCorrecaoXml,
   buildInutilizacaoXml
 } from '@nfe/infra/sefaz/evento-soap';
@@ -93,6 +94,49 @@ describe('XsdSchemaValidator — eventos e inutilizacao', () => {
 
     assert.deepEqual(result.errors, []);
     assert.equal(result.valid, true);
+  });
+
+  it('deve validar cancelamento por substituicao (110112) contra o XSD oficial', () => {
+    const chaveNfce = '51260411222333000181650010000000011000000015';
+    const chaveRef = '51260411222333000181650010000000021000000015';
+    const xml = buildCancelamentoSubstituicaoXml(
+      chaveNfce,
+      CNPJ,
+      '51',
+      '2',
+      '151260000000001',
+      'Cancelamento por erro na emissao do documento fiscal',
+      chaveRef,
+      '51',
+      '1.0.0',
+      DH_EVENTO
+    );
+
+    const result = validator.validate(wrapEnvEvento(signer.sign(xml, cert)), 'cancelamentoSubstituicao');
+
+    assert.deepEqual(result.errors, []);
+    assert.equal(result.valid, true);
+  });
+
+  it('deve reprovar substituicao sem chave referenciada', () => {
+    const chaveNfce = '51260411222333000181650010000000011000000015';
+    const xml = buildCancelamentoSubstituicaoXml(
+      chaveNfce,
+      CNPJ,
+      '51',
+      '2',
+      '151260000000001',
+      'Cancelamento por erro na emissao do documento fiscal',
+      '51260411222333000181650010000000021000000015',
+      '51',
+      '1.0.0',
+      DH_EVENTO
+    ).replace(/<chNFeRef>[^<]*<\/chNFeRef>/, '');
+
+    const result = validator.validate(wrapEnvEvento(signer.sign(xml, cert)), 'cancelamentoSubstituicao');
+
+    assert.equal(result.valid, false);
+    assert.ok(result.errors.length > 0);
   });
 
   it('deve reprovar evento com justificativa curta demais', () => {

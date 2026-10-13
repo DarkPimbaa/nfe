@@ -53,6 +53,52 @@ export function buildCancelamentoXml(
 }
 
 /**
+ * Monta XML de cancelamento por substituicao de NFC-e (110112) — SEM envelope SOAP.
+ * Precisa ser assinado antes de envolver no SOAP.
+ *
+ * Evento exclusivo de NFC-e (modelo 65): cancela a NFC-e referenciando a nova
+ * NFC-e que a substitui (`chNFeRef`). `cOrgaoAutor` default: UF da chave.
+ */
+export function buildCancelamentoSubstituicaoXml(
+  chNFe: string,
+  cnpj: string,
+  cOrgao: string,
+  tpAmb: '1' | '2',
+  nProt: string,
+  xJust: string,
+  chNFeRef: string,
+  cOrgaoAutor: string,
+  verAplic: string,
+  dhEvento: string
+): string {
+  const id = `ID110112${chNFe}01`;
+
+  return [
+    `<evento versao="1.00" xmlns="${NFE_NAMESPACE}">`,
+    `<infEvento Id="${id}">`,
+    `<cOrgao>${cOrgao}</cOrgao>`,
+    `<tpAmb>${tpAmb}</tpAmb>`,
+    `<CNPJ>${cnpj}</CNPJ>`,
+    `<chNFe>${chNFe}</chNFe>`,
+    `<dhEvento>${dhEvento}</dhEvento>`,
+    '<tpEvento>110112</tpEvento>',
+    '<nSeqEvento>1</nSeqEvento>',
+    '<verEvento>1.00</verEvento>',
+    '<detEvento versao="1.00">',
+    '<descEvento>Cancelamento por substituicao</descEvento>',
+    `<cOrgaoAutor>${cOrgaoAutor}</cOrgaoAutor>`,
+    '<tpAutor>1</tpAutor>',
+    `<verAplic>${verAplic}</verAplic>`,
+    `<nProt>${nProt}</nProt>`,
+    `<xJust>${xJust}</xJust>`,
+    `<chNFeRef>${chNFeRef}</chNFeRef>`,
+    '</detEvento>',
+    '</infEvento>',
+    '</evento>'
+  ].join('');
+}
+
+/**
  * Monta XML de Carta de Correcao (110110) — SEM envelope SOAP.
  * Precisa ser assinado antes de envolver no SOAP.
  */

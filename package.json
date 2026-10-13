@@ -18,6 +18,7 @@
     "emitir": "tsx tests/e2e/emitir-danfe.ts",
     "validar": "tsx tests/e2e/validar-xsd.ts",
     "prepublishOnly": "npm run build",
+    "check:pub": "node scripts/check-publish.js",
     "publish:npm": "npm publish --access public --registry=https://registry.npmjs.org",
     "publish:github": "npm publish --registry=https://npm.pkg.github.com",
     "publish:all": "npm run publish:npm && npm run publish:github"

@@ -87,6 +87,14 @@ test: add unit tests for CNPJ validation
 - Mock contracts, nao implementacoes concretas
 - Testes ficam em `tests/` espelhando a estrutura de `src/`
 
+### Release e paridade fonte x publicado
+
+- `dist/` é git-ignorado e rebuildado a cada release via `prepublishOnly` (`npm run build`).
+- Nunca publique tarball manual nem com `--ignore-scripts` — foi assim que a publicada saiu stale.
+- Toda release exige `npm test` + `npm run lint` + `npm run build` + `npm run check:pub` verdes.
+- O CI (`.github/workflows/ci.yml`) roda essa mesma sequência e quebra se o `dist` estiver
+  stale (sem `certificado`/`manifestar`) ou se o `npm pack` não incluir `dist/` + `schemas/`.
+
 ## Estrutura de um PR
 
 ```markdown
