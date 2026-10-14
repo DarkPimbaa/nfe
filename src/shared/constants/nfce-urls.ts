@@ -17,9 +17,12 @@ const NFCE_URLS: Record<string, NFCeUrlConfig> = {
     }
   },
   AL: {
+    // SEFAZ-AL documenta o QR-Code com http:// (sem "s") — página oficial
+    // www.sefaz.al.gov.br/nfce/nfce-documentacao ("URL de consulta de Nota
+    // Fiscal"). Enviar https:// diverge e a SEFAZ devolve 395.
     urlQRCode: {
-      homologacao: 'https://nfce.sefaz.al.gov.br/QRCode/consultarNFCe.jsp',
-      producao: 'https://nfce.sefaz.al.gov.br/QRCode/consultarNFCe.jsp'
+      homologacao: 'http://nfce.sefaz.al.gov.br/QRCode/consultarNFCe.jsp',
+      producao: 'http://nfce.sefaz.al.gov.br/QRCode/consultarNFCe.jsp'
     },
     urlChave: {
       homologacao: 'https://www.sefaz.al.gov.br/nfce/consulta',
@@ -127,8 +130,9 @@ const NFCE_URLS: Record<string, NFCeUrlConfig> = {
     }
   },
   MT: {
-    // SEFAZ-MT registra as URLs com http:// e compara a string literalmente.
-    // Enviar https:// dispara rejeicao 878 (Endereco da consulta diverge do previsto).
+    // SEFAZ-MT compara a URL literalmente e registra com http://.
+    // (Em 14/10/2026 chegou-se a virar a homologação p/ https por suspeita
+    // de 395, mas a empresa em teste é de AL — sem prova, mantém o original.)
     urlQRCode: {
       homologacao: 'http://homologacao.sefaz.mt.gov.br/nfce/consultanfce',
       producao: 'http://www.sefaz.mt.gov.br/nfce/consultanfce'

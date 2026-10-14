@@ -175,11 +175,18 @@ export class CupomNFCeGenerator {
     for (let i = 0; i < d.produtos.length; i++) {
       const p = d.produtos[i];
       const num = String(i + 1);
-      const desc = this.trunc(p.descricao, 25);
+      // Descricao quebra em ate 2 linhas (limite da coluna ~40 chars a 6pt)
+      // em vez de cortar em 25 — nome real do produto aparece no cupom.
+      const linhasDesc = this.quebrar(p.descricao, 40, 2);
       doc.text(num, M, y, { width: 15 });
-      doc.text(desc, M + 15, y, { width: W - 70 });
+      doc.text(linhasDesc[0] ?? '', M + 15, y, { width: W - 70 });
       doc.text(this.fmtNum(p.valorTotal), M + W - 55, y, { width: 55, align: 'right' });
       y += LHS;
+      for (const cont of linhasDesc.slice(1)) {
+        doc.text('', M, y, { width: 15 });
+        doc.text(cont, M + 15, y, { width: W - 70 });
+        y += LHS;
+      }
 
       // Linha 2: qtd x valor unitario
       doc.fillColor('#666666');
@@ -288,7 +295,7 @@ export class CupomNFCeGenerator {
 
     // Numero e serie
     doc.font('Helvetica-Bold').fontSize(FS);
-    doc.text(`NFC-e no ${d.numero} Serie ${d.serie}`, M, y, {
+    doc.text(`NFC-e nº ${d.numero} - Série ${d.serie}`, M, y, {
       width: W, align: 'center'
     });
     y += LHS;
@@ -356,7 +363,7 @@ export class CupomNFCeGenerator {
   private estimateHeight(d: CupomData): number {
     let h = 0;
     h += 80;  // header
-    h += d.produtos.length * 20; // products (2 lines each)
+    h += d.produtos.length * 24; // produtos (ate 3 linhas: 2 desc + qtd)
     h += 60;  // totals
     h += (d.pagamentos?.length ?? 1) * 12; // payments
     h += 120; // fiscal info
@@ -388,8 +395,37 @@ export class CupomNFCeGenerator {
     });
   }
 
-  private trunc(text: string, maxChars: number): string {
-    if (text.length <= maxChars) return text;
-    return text.substring(0, maxChars - 1) + '.';
+  /**
+   * Quebra o texto em ate `maxLinhas` linhas de ~`colunas` chars, respeitando
+   * palavras. Sobra alem do limite vira "…" no fim da ultima linha.
+   */
+  private quebrar(texto: string, colunas: number, maxLinhas: number): string[] {
+    const palavras = texto.split(/\s+/).filter(Boolean);
+    const linhas: string[] = [];
+    let i = 0;
+    while (i < palavras.length && linhas.length < maxLinhas) {
+      const ultimaLinha = linhas.length === maxLinhas - 1;
+      let atual = '';
+      while (i < palavras.length) {
+        const tentativa = atual ? `${atual} ${palavras[i]}` : palavras[i]!;
+        if (tentativa.length <= colunas) {
+          atual = tentativa;
+          i++;
+        } else if (!atual) {
+          // Palavra unica maior que a coluna: corta.
+          atual = palavras[i]!.slice(0, colunas);
+          i++;
+          break;
+        } else {
+          break;
+        }
+      }
+      if (ultimaLinha && i < palavras.length) {
+        atual = atual.slice(0, Math.max(0, colunas - 1)) + '…';
+      }
+      linhas.push(atual);
+    }
+    return linhas.length > 0 ? linhas : [''];
   }
+
 }

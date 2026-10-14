@@ -95,7 +95,7 @@ export class TransmitNFeUseCase {
       };
     }
 
-    throw new SefazRejectError(result.cStat, result.xMotivo, uf);
+    throw new SefazRejectError(result.cStat, result.xMotivo, uf, signedXml);
   }
 
   private buildNfeProc(signedNFe: string, protNFe?: string): string | undefined {

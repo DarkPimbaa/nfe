@@ -145,6 +145,7 @@ const FORMA_PAGAMENTO: Record<string, string> = {
   '17': 'PIX',
   '18': 'Transferencia',
   '19': 'Fidelidade/Cashback',
+  '20': 'PIX',
   '90': 'Sem Pagamento',
   '99': 'Outros'
 };
