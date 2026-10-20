@@ -147,9 +147,10 @@ export function buildInutilizacaoXml(
   serie: string,
   nNFIni: string,
   nNFFin: string,
-  xJust: string
+  xJust: string,
+  modelo: '55' | '65' = '55'
 ): string {
-  const id = `ID${cUF}${ano}${cnpj}55${serie.padStart(3, '0')}${nNFIni.padStart(9, '0')}${nNFFin.padStart(9, '0')}`;
+  const id = `ID${cUF}${ano}${cnpj}${modelo}${serie.padStart(3, '0')}${nNFIni.padStart(9, '0')}${nNFFin.padStart(9, '0')}`;
 
   return [
     `<inutNFe versao="4.00" xmlns="${NFE_NAMESPACE}">`,
@@ -159,7 +160,7 @@ export function buildInutilizacaoXml(
     `<cUF>${cUF}</cUF>`,
     `<ano>${ano}</ano>`,
     `<CNPJ>${cnpj}</CNPJ>`,
-    '<mod>55</mod>',
+    `<mod>${modelo}</mod>`,
     `<serie>${serie}</serie>`,
     `<nNFIni>${nNFIni}</nNFIni>`,
     `<nNFFin>${nNFFin}</nNFFin>`,

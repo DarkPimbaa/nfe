@@ -32,6 +32,8 @@ type InutilizaInput = {
   readonly numeroInicial: number;
   readonly numeroFinal: number;
   readonly justificativa: string;
+  /** Modelo da faixa (default 55 = comportamento historico). */
+  readonly modelo?: '55' | '65';
 };
 
 function toSefazEnv(env: NFeEnvironment): SefazEnvironment {
@@ -58,7 +60,8 @@ export class InutilizaNFeUseCase {
       String(input.serie),
       String(input.numeroInicial),
       String(input.numeroFinal),
-      input.justificativa
+      input.justificativa,
+      input.modelo ?? '55'
     );
 
     const cert = await certificate.load();

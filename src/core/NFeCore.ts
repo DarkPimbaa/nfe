@@ -72,6 +72,8 @@ export type InutilizaInput = {
   readonly numeroInicial: number;
   readonly numeroFinal: number;
   readonly justificativa: string;
+  /** Modelo da faixa (default 55 = comportamento historico). */
+  readonly modelo?: '55' | '65';
 };
 
 export type ManifestacaoInput = {
