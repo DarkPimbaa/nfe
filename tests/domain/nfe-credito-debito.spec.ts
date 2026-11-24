@@ -109,7 +109,8 @@ describe('NFe credito/debito (finNFe 5/6) — schemas', () => {
   it('credito 03 sem referencia no item passa nas regras de item (ref. de cabecalho e regra futura)', () => {
     const r = nfeSchema.safeParse({
       ...nfeBase,
-      identificacao: { ...identificacaoBase, finalidade: 5, tipoNotaCredito: '03' }
+      identificacao: { ...identificacaoBase, finalidade: 5, tipoNotaCredito: '03' },
+      produtos: [{ ...produtoBase, cfop: '1202' }]
     });
     assert.equal(r.success, true);
   });
@@ -127,7 +128,7 @@ describe('NFe credito/debito (finNFe 5/6) — schemas', () => {
     const r = nfeSchema.safeParse({
       ...nfeBase,
       identificacao: { ...identificacaoBase, finalidade: 5, tipoNotaCredito: '06' },
-      produtos: [{ ...produtoBase, dfeReferenciado: REF }]
+      produtos: [{ ...produtoBase, cfop: '1202', dfeReferenciado: REF }]
     });
     assert.equal(r.success, true);
   });

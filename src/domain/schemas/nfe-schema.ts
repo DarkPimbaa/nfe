@@ -1,4 +1,5 @@
 import { z } from 'zod/v4';
+import { errosDevolucao } from '../devolucao-regras';
 import { emitenteSchema } from './emitente-schema';
 import { destinatarioSchema } from './destinatario-schema';
 import { produtoSchema } from './produto-schema';
@@ -182,6 +183,11 @@ export const nfeSchema = z.object({
       message:
         'Nota de credito (finNFe=5) nao pode referenciar por item, exceto tpNFCredito 06 (VC02-07)'
     });
+  }
+
+  // I08-140 (Rej. 327), B25-40 (Rej. 255), VC02-14/05 (Rej. 321/1010).
+  for (const erro of errosDevolucao(nfe as never)) {
+    ctx.addIssue({ code: 'custom', path: ['produtos'], message: erro });
   }
 });
 

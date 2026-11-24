@@ -3,6 +3,7 @@ import { XmlSigner } from '@nfe/contracts/XmlSigner';
 import { CertificateProvider } from '@nfe/contracts/CertificateProvider';
 import { SefazTransport } from '@nfe/contracts/SefazTransport';
 import { NFeProps } from '@nfe/domain/entities/NFe';
+import { errosDevolucao } from '@nfe/domain/devolucao-regras';
 import { NFeError } from '@nfe/shared/errors/NFeError';
 import { TransmitResult, NFeEnvironment } from '@nfe/core/types';
 import { SefazRejectError } from '@nfe/shared/errors/SefazRejectError';
@@ -46,6 +47,7 @@ export class TransmitNFeUseCase {
    */
   async execute(nfe: NFeProps): Promise<TransmitResult> {
     this.validateCreditoDebito(nfe);
+    this.validateDevolucao(nfe);
 
     const { xmlBuilder, xmlSigner, certificate, transport, environment, uf, cIdToken, csc } =
       this.deps;
@@ -134,6 +136,17 @@ export class TransmitNFeUseCase {
       throw new NFeError(
         'Nota de credito (finNFe=5) nao pode referenciar por item, exceto tpNFCredito 06 (VC02-07)'
       );
+    }
+  }
+
+  /**
+   * Regras de devolucao/referenciamento (NT 2026.009 e NT 2025.002 v1.53).
+   * Falha rapido antes de assinar ou transmitir.
+   */
+  private validateDevolucao(nfe: NFeProps): void {
+    const erros = errosDevolucao(nfe);
+    if (erros.length > 0) {
+      throw new NFeError(erros.join('; '));
     }
   }
 

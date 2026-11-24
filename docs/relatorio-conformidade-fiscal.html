@@ -186,9 +186,9 @@
     </section>
 
     <section class="card gap p1b" data-p="p1">
-      <h3><span class="prio p1">P1</span> Devolução: CFOP e referenciamento sem validação <span class="badge warn">ATENÇÃO</span></h3>
+      <h3><span class="prio p1">P1</span> Devolução: CFOP e referenciamento sem validação <span class="badge ok">OK — implementado em 24/11/2026</span></h3>
       <p><strong>O que é:</strong> <strong>CFOP</strong> é o código que descreve a operação (ex.: 5.102 = venda dentro do estado, 1.202 = devolução). Desde 17/09/2026 (NT 2026.009), devolução (<code>finNFe=4</code>) e notas de retorno só aceitam CFOP marcado com <code>indDevol=1</code> (Rej. 327). E a v1.53 definiu como referenciar o documento original: <code>refNFe</code> no <strong>cabeçalho</strong> (1 nota) <strong>ou</strong> <code>DFeReferenciado</code> no <strong>item</strong> (várias notas) — nunca os dois (Rej. 321/1010).</p>
-      <p><strong>Como está:</strong> a lib tem a tabela de CFOP (só descrições) e gera os dois tipos de referência, mas <strong>não valida nada</strong>: aceita CFOP errado na devolução e referência duplicada (cabeçalho + item).</p>
+      <p><strong>Como está:</strong> a lib tem a tabela de CFOP (só descrições) e gera os dois tipos de referência, mas agora <strong>valida tudo</strong>: tabela de ~100 CFOPs com <code>indDevol</code> (<code>src/domain/devolucao-regras.ts</code>), regra I08-140 (Rej. 327, com exceções 1949/2949 e gás 5949/6949+NCM 27112100), B25-40 (Rej. 255, 1 NF no cabeçalho) e VC02-14/05 (Rej. 321/1010, cabeçalho <em>xor</em> item, exceção embalagens 5921/6921) no Zod e no <code>TransmitNFeUseCase</code>. Cobertura: <code>tests/domain/nfe-devolucao.spec.ts</code> (13) + <code>TransmitNFeUseCase.spec.ts</code> (+3).</p>
       <p><strong>Por que implementar:</strong> a NT 2026.009 já está em vigor e a regra da devolução produz em 16/11/2026. São validações baratas que evitam rejeição na cara do usuário.</p>
       <p class="files">Arquivos: <code>src/shared/constants/cfop.ts</code>, use-cases de transmissão/devolução, <code>DefaultXmlBuilder.buildNFref</code></p>
     </section>

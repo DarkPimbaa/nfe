@@ -258,3 +258,65 @@ describe('TransmitNFeUseCase — credito/debito (finNFe 5/6)', () => {
     );
   });
 });
+
+describe('TransmitNFeUseCase — devolucao (finNFe 4)', () => {
+  const CHAVE = '51240412345678000195550010000000011234567890';
+
+  function nfeDevolucao(
+    identificacao: Record<string, unknown>,
+    produtos: unknown[]
+  ): NFeProps {
+    return {
+      identificacao: { finalidade: 4, ...identificacao },
+      produtos
+    } as unknown as NFeProps;
+  }
+
+  function useCaseCom(soap = 'ok'): TransmitNFeUseCase {
+    const response = buildSoapAutorizacaoResponse('104', '100', 'Autorizado', '1', 'x');
+    return new TransmitNFeUseCase({
+      ...createMocks(soap === 'ok' ? response : soap),
+      environment: 'homologation',
+      uf: 'MT'
+    });
+  }
+
+  it('rejeita devolucao com CFOP de venda (I08-140) antes de transmitir', async () => {
+    const useCase = useCaseCom();
+    await assert.rejects(
+      () =>
+        useCase.execute(
+          nfeDevolucao({}, [{ numero: 1, cfop: '5102', ncm: '61091000' }])
+        ),
+      (err: unknown) =>
+        err instanceof NFeError && err.message.includes('I08-140')
+    );
+  });
+
+  it('rejeita devolucao sem referencia (VC02-14) antes de transmitir', async () => {
+    const useCase = useCaseCom();
+    await assert.rejects(
+      () =>
+        useCase.execute(
+          nfeDevolucao({}, [{ numero: 1, cfop: '1202', ncm: '61091000' }])
+        ),
+      (err: unknown) =>
+        err instanceof NFeError && err.message.includes('VC02-14')
+    );
+  });
+
+  it('rejeita referencia dupla cabecalho+item (VC02-05)', async () => {
+    const useCase = useCaseCom();
+    await assert.rejects(
+      () =>
+        useCase.execute(
+          nfeDevolucao(
+            { notasReferenciadas: [{ tipo: 'nfe', chaveAcesso: CHAVE }] },
+            [{ numero: 1, cfop: '1202', ncm: '61091000', dfeReferenciado: { chaveAcesso: CHAVE } }]
+          )
+        ),
+      (err: unknown) =>
+        err instanceof NFeError && err.message.includes('VC02-05')
+    );
+  });
+});
