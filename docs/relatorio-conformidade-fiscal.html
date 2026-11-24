@@ -170,9 +170,9 @@
     </section>
 
     <section class="card gap p1b" data-p="p1">
-      <h3><span class="prio p1">P1</span> Pacote de schemas desatualizado (anterior à NT v1.40) <span class="badge missing">FALTA</span></h3>
+      <h3><span class="prio p1">P1</span> Pacote de schemas atualizado para PL 010h v1.03 (13/11/2026) <span class="badge ok">OK — implementado em 24/11/2026</span></h3>
       <p><strong>O que é:</strong> <strong>schemas XSD</strong> são os arquivos oficiais que definem o formato válido do XML. A lib os acompanha em <code>schemas/</code> e valida tudo contra eles antes de transmitir. Se o pack for antigo, a validação local reprova XML que a SEFAZ aceitaria (falso negativo) — ou aprova estrutura velha.</p>
-      <p><strong>Como está:</strong> faltam no pack campos da NT v1.40 (mai/2026): <code>gALCZFMCBS</code> (alíquota zero de CBS em Área de Livre Comércio/ZFM), <code>cIndOp</code> (indicador de operação, ex.: leilão judicial), <code>ISUFemit</code> (inscrição Suframa do emitente) e <code>refDFeAnt</code> (compras governamentais).</p>
+      <p><strong>Como está:</strong> pack <strong>PL 010h v1.03</strong> (NT 2026.006, 2026.008 v1.01 e 2026.005, publicado em 13/11/2026) baixado do Portal Nacional da NF-e e aplicado: <code>gALCZFMCBS</code>, <code>cIndOp</code>, <code>ISUFEmit</code>, <code>refDFeAnt</code>, <code>vProdLiq</code>/<code>vUnComLiq</code>/<code>vProdLiqTot</code>, <code>ICMSPrevistoPagtoAntecip</code>, eventos novos 110300/412140 e CNPJ alfanumérico. Patch de compatibilidade <code>{0,}</code>→<code>*</code> reaplicado nos 3 arquivos. Cobertura: 216 testes (domain/shared/application/sefaz) + 6 XML validados contra o pack novo.</p>
       <p><strong>Por que implementar:</strong> mantém a validação local confiável. Ação: baixar o pack atual no Portal Nacional da NF-e (Documentos → Notas Técnicas) e comparar — a v1.53 não cita pack novo, então o Portal pode estar atrasado; ainda assim, o conteúdo da v1.40 já deveria constar.</p>
       <p class="files">Pasta: <code>schemas/</code> (principalmente <code>leiauteNFe_v4.00.xsd</code> e <code>DFeTiposBasicos_v1.00.xsd</code>)</p>
     </section>
