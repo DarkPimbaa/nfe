@@ -273,6 +273,11 @@ export const ibsCbsSchema = z.object({
     .optional()
 });
 
+export const dfeReferenciadoSchema = z.object({
+  chaveAcesso: z.string().length(44),
+  numeroItem: z.int().min(1).optional()
+});
+
 export const produtoSchema = z.object({
   numero: z.int().min(1),
   codigo: z.string().min(1).max(60),
@@ -346,5 +351,6 @@ export const produtoSchema = z.object({
     })
     .optional(),
   informacoesAdicionais: z.string().max(500).optional(),
-  valorItem: z.number().min(0).optional()
+  valorItem: z.number().min(0).optional(),
+  dfeReferenciado: dfeReferenciadoSchema.optional()
 });

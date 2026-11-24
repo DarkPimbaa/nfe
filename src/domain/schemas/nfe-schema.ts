@@ -72,7 +72,7 @@ export const nfeIdentificacaoSchema = z.object({
   naturezaOperacao: z.string().min(1).max(60),
   tipoOperacao: z.literal(0).or(z.literal(1)),
   destinoOperacao: z.literal(1).or(z.literal(2)).or(z.literal(3)),
-  finalidade: z.literal(1).or(z.literal(2)).or(z.literal(3)).or(z.literal(4)),
+  finalidade: z.literal(1).or(z.literal(2)).or(z.literal(3)).or(z.literal(4)).or(z.literal(5)).or(z.literal(6)),
   consumidorFinal: z.literal(0).or(z.literal(1)),
   presencaComprador: z
     .literal(0)
@@ -113,7 +113,24 @@ export const nfeIdentificacaoSchema = z.object({
   dataHoraContingencia: z.date().optional(),
   justificativaContingencia: z.string().min(15).max(256).optional(),
   notasReferenciadas: z.array(notaReferenciadaSchema).max(500).optional(),
-  pagamentosAntecipados: z.array(z.string().length(44)).max(99).optional()
+  pagamentosAntecipados: z.array(z.string().length(44)).max(99).optional(),
+  tipoNotaDebito: z.enum(['01', '02', '03', '04', '05', '06', '07', '08']).optional(),
+  tipoNotaCredito: z.enum(['01', '02', '03', '04', '05', '06']).optional()
+}).superRefine((id, ctx) => {
+  if (id.finalidade === 5 && !id.tipoNotaCredito) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['tipoNotaCredito'],
+      message: 'Nota de credito (finNFe=5) exige tipoNotaCredito (tpNFCredito)'
+    });
+  }
+  if (id.finalidade === 6 && !id.tipoNotaDebito) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['tipoNotaDebito'],
+      message: 'Nota de debito (finNFe=6) exige tipoNotaDebito (tpNFDebito)'
+    });
+  }
 });
 
 export const nfeSchema = z.object({
@@ -140,6 +157,31 @@ export const nfeSchema = z.object({
   processosReferenciados: z.array(processoReferenciadoSchema).max(100).optional(),
   solicitacaoNFF: z.string().min(1).max(5000).optional(),
   agropecuario: agropecuarioSchema.optional()
+}).superRefine((nfe, ctx) => {
+  const id = nfe.identificacao;
+  const exigeRefItem =
+    id.tipoNotaCredito === '06' ||
+    id.tipoNotaDebito === '03' ||
+    id.tipoNotaDebito === '04';
+  const temRefItem = (nfe.produtos ?? []).some((p) => p?.dfeReferenciado !== undefined);
+  // VC02-10 (Rej. 1038): esses motivos exigem DFeReferenciado no item.
+  if (exigeRefItem && !temRefItem) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['produtos'],
+      message:
+        'tpNFCredito 06 e tpNFDebito 03/04 exigem DFeReferenciado em ao menos um item (VC02-10)'
+    });
+  }
+  // VC02-07 (Rej. 1042): nota de credito nao referencia por item, exceto tpNFCredito 06.
+  if (id.finalidade === 5 && id.tipoNotaCredito !== '06' && temRefItem) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['produtos'],
+      message:
+        'Nota de credito (finNFe=5) nao pode referenciar por item, exceto tpNFCredito 06 (VC02-07)'
+    });
+  }
 });
 
 export type NFeInput = z.infer<typeof nfeSchema>;

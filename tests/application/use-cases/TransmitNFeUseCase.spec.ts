@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { TransmitNFeUseCase } from '@nfe/application/use-cases/TransmitNFeUseCase';
+import { NFeError } from '@nfe/shared/errors/NFeError';
 import { SefazRejectError } from '@nfe/shared/errors/SefazRejectError';
 import type { XmlBuilder } from '@nfe/contracts/XmlBuilder';
 import type { XmlSigner } from '@nfe/contracts/XmlSigner';
@@ -197,6 +198,63 @@ describe('TransmitNFeUseCase', () => {
     await assert.rejects(
       () => useCase.execute(fakeNFe),
       { message: /Connection refused/ }
+    );
+  });
+});
+
+describe('TransmitNFeUseCase — credito/debito (finNFe 5/6)', () => {
+  function nfeFinalidade(finalidade: number, extraId = {}, produtos = []): NFeProps {
+    return {
+      identificacao: { finalidade, ...extraId },
+      produtos
+    } as unknown as NFeProps;
+  }
+
+  it('rejeita finNFe 5 sem tipoNotaCredito antes de transmitir', async () => {
+    const response = buildSoapAutorizacaoResponse('104', '100', 'Autorizado', '1', 'x');
+    const useCase = new TransmitNFeUseCase({
+      ...createMocks(response),
+      environment: 'homologation',
+      uf: 'MT'
+    });
+
+    await assert.rejects(
+      () => useCase.execute(nfeFinalidade(5)),
+      (err: unknown) =>
+        err instanceof NFeError && err.message.includes('tipoNotaCredito')
+    );
+  });
+
+  it('rejeita finNFe 6 sem tipoNotaDebito antes de transmitir', async () => {
+    const response = buildSoapAutorizacaoResponse('104', '100', 'Autorizado', '1', 'x');
+    const useCase = new TransmitNFeUseCase({
+      ...createMocks(response),
+      environment: 'homologation',
+      uf: 'MT'
+    });
+
+    await assert.rejects(
+      () => useCase.execute(nfeFinalidade(6)),
+      (err: unknown) =>
+        err instanceof NFeError && err.message.includes('tipoNotaDebito')
+    );
+  });
+
+  it('rejeita tpNFCredito 06 sem DFeReferenciado (VC02-10)', async () => {
+    const response = buildSoapAutorizacaoResponse('104', '100', 'Autorizado', '1', 'x');
+    const useCase = new TransmitNFeUseCase({
+      ...createMocks(response),
+      environment: 'homologation',
+      uf: 'MT'
+    });
+
+    await assert.rejects(
+      () =>
+        useCase.execute(
+          nfeFinalidade(5, { tipoNotaCredito: '06' }, [{ numero: 1 }])
+        ),
+      (err: unknown) =>
+        err instanceof NFeError && err.message.includes('VC02-10')
     );
   });
 });

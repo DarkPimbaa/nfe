@@ -91,7 +91,7 @@ export type NFeIdentificacao = {
   readonly naturezaOperacao: string;
   readonly tipoOperacao: 0 | 1;
   readonly destinoOperacao: 1 | 2 | 3;
-  readonly finalidade: 1 | 2 | 3 | 4;
+  readonly finalidade: 1 | 2 | 3 | 4 | 5 | 6;
   readonly consumidorFinal: 0 | 1;
   readonly presencaComprador: 0 | 1 | 2 | 3 | 4 | 5 | 9;
   readonly uf: string;

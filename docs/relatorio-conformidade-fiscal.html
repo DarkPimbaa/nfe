@@ -154,9 +154,9 @@
     </div>
 
     <section class="card gap p0b" data-p="p0">
-      <h3><span class="prio p0">P0</span> Nota de crédito e de débito (<code>finNFe</code> 5 e 6) bloqueadas <span class="badge missing">FALTA</span></h3>
+      <h3><span class="prio p0">P0</span> Nota de crédito e de débito (<code>finNFe</code> 5 e 6) bloqueadas <span class="badge ok">OK — implementado em 24/11/2026</span></h3>
       <p><strong>O que é:</strong> <code>finNFe</code> é a <em>finalidade</em> da nota. Além da venda (1), devolução (4) etc., a reforma criou a <strong>nota de crédito (5)</strong> — ex.: conceder desconto ou devolver valor ao cliente — e a <strong>nota de débito (6)</strong> — ex.: cobrar multa/juros depois. Cada uma exige um <em>motivo</em>: <code>tpNFCredito</code> (ex.: 03 = retorno por recusa, 06 = recusa parcial) ou <code>tpNFDebito</code> (ex.: 04 = multa e juros). Criadas pelo Ajuste SINIEF 49/2025, são o mecanismo de ajuste da apuração do IBS/CBS.</p>
-      <p><strong>Como está:</strong> o builder e a entidade já sabem emitir as tags, mas o validador de entrada (<code>src/domain/schemas/nfe-schema.ts:75</code>) só aceita finalidade 1–4. Ou seja: <strong>é impossível emitir crédito/débito pela lib hoje</strong>.</p>
+      <p><strong>Como está:</strong> implementado — <code>finalidade</code> aceita 5/6, motivo obrigatório (<code>tipoNotaCredito</code>/<code>tipoNotaDebito</code> com a lista do XSD), regra VC02-10 (tpNFCredito 06 e tpNFDebito 03/04 exigem <code>DFeReferenciado</code> no item) e VC02-07 (crédito só referencia por item no motivo 06) validadas no Zod e no <code>TransmitNFeUseCase</code>, com XML válido no XSD. Cobertura: <code>tests/domain/nfe-credito-debito.spec.ts</code> (12), <code>TransmitNFeUseCase.spec.ts</code> (+3) e <code>DefaultXmlBuilder.credito-debito.spec.ts</code> (4).</p>
       <p><strong>Por que implementar:</strong> sem isso, qualquer operação de ajuste pós-venda no regime da reforma não sai pela lib. É mudança pequena (ampliar o Zod + exigir o motivo correspondente + validações de referenciamento).</p>
       <p class="files">Arquivos: <code>src/domain/schemas/nfe-schema.ts</code>, <code>src/domain/entities/NFe.ts</code>, <code>src/infra/xml/DefaultXmlBuilder.ts</code></p>
     </section>

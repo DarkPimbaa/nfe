@@ -3,6 +3,7 @@ import { XmlSigner } from '@nfe/contracts/XmlSigner';
 import { CertificateProvider } from '@nfe/contracts/CertificateProvider';
 import { SefazTransport } from '@nfe/contracts/SefazTransport';
 import { NFeProps } from '@nfe/domain/entities/NFe';
+import { NFeError } from '@nfe/shared/errors/NFeError';
 import { TransmitResult, NFeEnvironment } from '@nfe/core/types';
 import { SefazRejectError } from '@nfe/shared/errors/SefazRejectError';
 import { getSefazUrl, SefazEnvironment } from '@nfe/shared/constants/sefaz-urls';
@@ -44,6 +45,8 @@ export class TransmitNFeUseCase {
    * tratar rejeição no `catch` e chamar `consultarProtocolo` antes de reemitir.
    */
   async execute(nfe: NFeProps): Promise<TransmitResult> {
+    this.validateCreditoDebito(nfe);
+
     const { xmlBuilder, xmlSigner, certificate, transport, environment, uf, cIdToken, csc } =
       this.deps;
 
@@ -96,6 +99,42 @@ export class TransmitNFeUseCase {
     }
 
     throw new SefazRejectError(result.cStat, result.xMotivo, uf, signedXml);
+  }
+
+  /**
+   * Regras de credito/debito da RTC (NT 2025.002), validadas antes de
+   * assinar ou transmitir para falhar rapido com mensagem clara em vez
+   * da rejeicao da SEFAZ.
+   */
+  private validateCreditoDebito(nfe: NFeProps): void {
+    const id = nfe.identificacao;
+    if (!id) return;
+
+    if (id.finalidade === 5 && !id.tipoNotaCredito) {
+      throw new NFeError('Nota de credito (finNFe=5) exige tipoNotaCredito (tpNFCredito)');
+    }
+    if (id.finalidade === 6 && !id.tipoNotaDebito) {
+      throw new NFeError('Nota de debito (finNFe=6) exige tipoNotaDebito (tpNFDebito)');
+    }
+
+    const exigeRefItem =
+      id.tipoNotaCredito === '06' ||
+      id.tipoNotaDebito === '03' ||
+      id.tipoNotaDebito === '04';
+    const temRefItem = (nfe.produtos ?? []).some((p) => p?.dfeReferenciado !== undefined);
+
+    // VC02-10 (Rej. 1038).
+    if (exigeRefItem && !temRefItem) {
+      throw new NFeError(
+        'tpNFCredito 06 e tpNFDebito 03/04 exigem DFeReferenciado em ao menos um item (VC02-10)'
+      );
+    }
+    // VC02-07 (Rej. 1042).
+    if (id.finalidade === 5 && id.tipoNotaCredito !== '06' && temRefItem) {
+      throw new NFeError(
+        'Nota de credito (finNFe=5) nao pode referenciar por item, exceto tpNFCredito 06 (VC02-07)'
+      );
+    }
   }
 
   private buildNfeProc(signedNFe: string, protNFe?: string): string | undefined {
