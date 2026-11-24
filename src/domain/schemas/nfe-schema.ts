@@ -1,4 +1,5 @@
 import { z } from 'zod/v4';
+import { errosCClassTrib } from '../cclasstrib';
 import { errosDevolucao } from '../devolucao-regras';
 import { emitenteSchema } from './emitente-schema';
 import { destinatarioSchema } from './destinatario-schema';
@@ -187,6 +188,11 @@ export const nfeSchema = z.object({
 
   // I08-140 (Rej. 327), B25-40 (Rej. 255), VC02-14/05 (Rej. 321/1010).
   for (const erro of errosDevolucao(nfe as never)) {
+    ctx.addIssue({ code: 'custom', path: ['produtos'], message: erro });
+  }
+
+  // UB14-10/20/25 (Rej. 1023/1024/1025): CST x cClassTrib x modelo.
+  for (const erro of errosCClassTrib(nfe as never)) {
     ctx.addIssue({ code: 'custom', path: ['produtos'], message: erro });
   }
 });

@@ -305,6 +305,34 @@ describe('TransmitNFeUseCase — devolucao (finNFe 4)', () => {
     );
   });
 
+  it('rejeita cClassTrib incompativel com o CST (UB14-20)', async () => {
+    const useCaseUB = useCaseCom();
+    await assert.rejects(
+      () =>
+        useCaseUB.execute(
+          nfeDevolucao(
+            { notasReferenciadas: [{ tipo: 'nfe', chaveAcesso: CHAVE }] },
+            [
+              {
+                numero: 1,
+                cfop: '1202',
+                ncm: '61091000',
+                ibsCbs: {
+                  cst: '200',
+                  cClassTrib: '000001',
+                  ibsUf: { aliquota: 0.1 },
+                  ibsMun: { aliquota: 0 },
+                  cbs: { aliquota: 0.9 }
+                }
+              }
+            ]
+          )
+        ),
+      (err: unknown) =>
+        err instanceof NFeError && err.message.includes('1024')
+    );
+  });
+
   it('rejeita referencia dupla cabecalho+item (VC02-05)', async () => {
     const useCase = useCaseCom();
     await assert.rejects(

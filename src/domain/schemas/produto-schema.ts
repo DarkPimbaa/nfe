@@ -173,8 +173,8 @@ const creditoPresumidoEnteSchema = z
   });
 
 export const ibsCbsSchema = z.object({
-  cst: z.string().min(1).max(3),
-  cClassTrib: z.string().min(1).max(6),
+  cst: z.string().length(3),
+  cClassTrib: z.string().length(6),
   doacao: z.boolean().optional(),
   baseCalculo: z.number().min(0).optional(),
   pIBSUF: z.number().min(0).optional(),
@@ -185,8 +185,8 @@ export const ibsCbsSchema = z.object({
   cbs: enteTributanteSchema.optional(),
   tributacaoRegular: z
     .object({
-      cst: z.string().min(1).max(3),
-      cClassTrib: z.string().min(1).max(6),
+      cst: z.string().length(3),
+      cClassTrib: z.string().length(6),
       aliquotaEfetivaIbsUf: z.number().min(0),
       valorIbsUf: z.number().min(0),
       aliquotaEfetivaIbsMun: z.number().min(0),
@@ -308,8 +308,8 @@ export const produtoSchema = z.object({
   ibsCbs: ibsCbsSchema.optional(),
   impostoSeletivo: z
     .object({
-      cst: z.string().min(1).max(3),
-      cClassTrib: z.string().min(1).max(6),
+      cst: z.string().length(3),
+      cClassTrib: z.string().length(6),
       baseCalculo: z.number().min(0),
       aliquota: z.number().min(0).max(100),
       aliquotaEspecifica: z.number().min(0).optional(),

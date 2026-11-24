@@ -3,6 +3,7 @@ import { XmlSigner } from '@nfe/contracts/XmlSigner';
 import { CertificateProvider } from '@nfe/contracts/CertificateProvider';
 import { SefazTransport } from '@nfe/contracts/SefazTransport';
 import { NFeProps } from '@nfe/domain/entities/NFe';
+import { errosCClassTrib } from '@nfe/domain/cclasstrib';
 import { errosDevolucao } from '@nfe/domain/devolucao-regras';
 import { NFeError } from '@nfe/shared/errors/NFeError';
 import { TransmitResult, NFeEnvironment } from '@nfe/core/types';
@@ -48,6 +49,7 @@ export class TransmitNFeUseCase {
   async execute(nfe: NFeProps): Promise<TransmitResult> {
     this.validateCreditoDebito(nfe);
     this.validateDevolucao(nfe);
+    this.validateClassificacao(nfe);
 
     const { xmlBuilder, xmlSigner, certificate, transport, environment, uf, cIdToken, csc } =
       this.deps;
@@ -145,6 +147,16 @@ export class TransmitNFeUseCase {
    */
   private validateDevolucao(nfe: NFeProps): void {
     const erros = errosDevolucao(nfe);
+    if (erros.length > 0) {
+      throw new NFeError(erros.join('; '));
+    }
+  }
+
+  /**
+   * Par CST x cClassTrib x modelo (UB14-10/20/25, Rej. 1023/1024/1025).
+   */
+  private validateClassificacao(nfe: NFeProps): void {
+    const erros = errosCClassTrib(nfe);
     if (erros.length > 0) {
       throw new NFeError(erros.join('; '));
     }

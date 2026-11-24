@@ -178,9 +178,9 @@
     </section>
 
     <section class="card gap p1b" data-p="p1">
-      <h3><span class="prio p1">P1</span> Sem validação <code>cClassTrib × CST × modelo</code> <span class="badge missing">FALTA</span></h3>
+      <h3><span class="prio p1">P1</span> Sem validação <code>cClassTrib × CST × modelo</code> <span class="badge ok">OK — implementado em 24/11/2026</span></h3>
       <p><strong>O que é:</strong> todo item precisa de um par inseparável — o <strong>CST do IBS/CBS</strong> (3 dígitos: a <em>família</em> do tratamento, ex.: 000 = tributação integral, 400 = isenção, 620 = monofasia) e o <strong>cClassTrib</strong> (6 dígitos: o <em>dispositivo legal exato</em>, cujos 3 primeiros repetem o CST). A tabela oficial tem <strong>173 códigos</strong> (v1.71) e diz ainda quais grupos do XML cada código exige e em quais documentos vale (NF-e × NFC-e). Par errado = Rej. <strong>1023</strong> (código inexistente), <strong>1024</strong> (CST incompatível) ou <strong>1025</strong> (código vedado no modelo).</p>
-      <p><strong>Como está:</strong> a lib aceita qualquer texto (<code>min(1).max(6)</code>), sem checar CST, prefixo ou modelo.</p>
+      <p><strong>Como está:</strong> a lib agora valida tudo: tabela oficial IT 2025.002 v1.71 com os <strong>173 códigos</strong> (<code>src/domain/cclasstrib.ts</code>, extraída da planilha do Portal/SVRS, com <code>indNFe</code>/<code>indNFCe</code> e vigência — CST 220 marcado expirado), 18 CSTs, prefixo (3 dígitos = CST), tamanhos exatos do XSD (CST 3, cClassTrib 6) e as regras UB14-10/20/25 (Rej. 1023/1024/1025) no Zod e no <code>TransmitNFeUseCase</code>. Cobertura: <code>tests/domain/nfe-cclasstrib.spec.ts</code> (11) + <code>TransmitNFeUseCase.spec.ts</code> (+1).</p>
       <p><strong>Por que implementar:</strong> é a causa mais provável de rejeição futura quando a UB12-10 ligar em produção. Mínimo viável: validar os 18 CSTs + prefixo (3 primeiros dígitos = CST) + indicador do modelo; tabela completa de 173 códigos como passo seguinte.</p>
       <p class="files">Arquivos: <code>src/domain/schemas/produto-schema.ts</code> (+ nova tabela <code>src/shared/constants/cclasstrib.ts</code>)</p>
     </section>
