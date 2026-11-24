@@ -1,5 +1,6 @@
 import { z } from 'zod/v4';
 import { errosCClassTrib } from '../cclasstrib';
+import { errosNFCe } from '../nfce-regras';
 import { errosDevolucao } from '../devolucao-regras';
 import { emitenteSchema } from './emitente-schema';
 import { destinatarioSchema } from './destinatario-schema';
@@ -194,6 +195,11 @@ export const nfeSchema = z.object({
   // UB14-10/20/25 (Rej. 1023/1024/1025): CST x cClassTrib x modelo.
   for (const erro of errosCClassTrib(nfe as never)) {
     ctx.addIssue({ code: 'custom', path: ['produtos'], message: erro });
+  }
+
+  // Vedacoes da NFC-e (VC02-04, UB62-10, B25b-20, Rej. 1049/1146/1153/1165).
+  for (const erro of errosNFCe(nfe as never)) {
+    ctx.addIssue({ code: 'custom', path: ['identificacao'], message: erro });
   }
 });
 

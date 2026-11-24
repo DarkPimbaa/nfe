@@ -69,7 +69,7 @@
     <h1>Relatório de Conformidade Fiscal</h1>
     <p><strong>Nossa lib:</strong> <code>@DarkPimbaa/nfe</code> v2.0.7 &nbsp;|&nbsp; <strong>Base:</strong> <code>@darkpimbaa/nfe</code> &nbsp;|&nbsp; <strong>Data:</strong> 24/11/2026 &nbsp;|&nbsp; <strong>Tema:</strong> Reforma Tributária do Consumo (IBS / CBS / IS) na NF-e e NFC-e</p>
     <p>Base oficial: NT 2025.002-RTC v1.53, NT 2026.008 v1.01, NT 2026.009, Atos Conjuntos RFB/CGIBS nº 4 e nº 7, cClassTrib v1.71.</p>
-    <span class="verdict">Base sólida — 4 gaps reais, 1 com prazo em 14/12/2026</span>
+    <span class="verdict">Plano RTC concluído — 6/6 fases implementadas em 24/11/2026</span>
   </div>
 </header>
 
@@ -194,9 +194,9 @@
     </section>
 
     <section class="card gap" data-p="p2">
-      <h3><span class="prio p2">P2</span> Vedações próprias da NFC-e <span class="badge warn">ATENÇÃO</span></h3>
+      <h3><span class="prio p2">P2</span> Vedações próprias da NFC-e <span class="badge ok">OK — implementado em 24/11/2026</span></h3>
       <p><strong>O que é:</strong> a <strong>NFC-e</strong> (modelo 65, cupom do varejo) usa os mesmos grupos de IBS/CBS, mas com proibições: sem <code>DFeReferenciado</code> (Rej. 708), sem devolução de tributo da CBS, sem crédito presumido, sem campos de intermediador/entrega futura, e só códigos <code>cClassTrib</code> liberados para o modelo (indicador <code>indNFCe</code>).</p>
-      <p><strong>Como está / por que (não) implementar agora:</strong> a lib emite NFC-e corretamente nos casos comuns; as vedações só mordem em casos de borda do varejo. Implementar quando a validação <code>cClassTrib</code> (P1) existir, reaproveitando a mesma tabela. Não é urgente.</p>
+      <p><strong>Como está:</strong> implementado em <code>src/domain/nfce-regras.ts</code> (puro, Zod + use-case): sem <code>DFeReferenciado</code> (VC02-04/708), sem <code>dPrevEntrega</code> (1153), sem <code>tpCredPresIBSZFM</code> (1165), sem <code>gDevTrib</code> da CBS (UB62-10/1187), sem pagamento antecipado referenciado (1146), sem crédito presumido (1049) e <code>indPres</code> restrito a 1/4/5 (B25b-20/717). Cobertura: <code>tests/domain/nfe-nfce.spec.ts</code> (11) + <code>TransmitNFeUseCase.spec.ts</code> (+1).</p>
     </section>
   </section>
 

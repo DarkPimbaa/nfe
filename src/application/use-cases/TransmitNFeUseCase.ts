@@ -4,6 +4,7 @@ import { CertificateProvider } from '@nfe/contracts/CertificateProvider';
 import { SefazTransport } from '@nfe/contracts/SefazTransport';
 import { NFeProps } from '@nfe/domain/entities/NFe';
 import { errosCClassTrib } from '@nfe/domain/cclasstrib';
+import { errosNFCe } from '@nfe/domain/nfce-regras';
 import { errosDevolucao } from '@nfe/domain/devolucao-regras';
 import { NFeError } from '@nfe/shared/errors/NFeError';
 import { TransmitResult, NFeEnvironment } from '@nfe/core/types';
@@ -50,6 +51,7 @@ export class TransmitNFeUseCase {
     this.validateCreditoDebito(nfe);
     this.validateDevolucao(nfe);
     this.validateClassificacao(nfe);
+    this.validateNFCe(nfe);
 
     const { xmlBuilder, xmlSigner, certificate, transport, environment, uf, cIdToken, csc } =
       this.deps;
@@ -157,6 +159,14 @@ export class TransmitNFeUseCase {
    */
   private validateClassificacao(nfe: NFeProps): void {
     const erros = errosCClassTrib(nfe);
+    if (erros.length > 0) {
+      throw new NFeError(erros.join('; '));
+    }
+  }
+
+  /** Vedacoes proprias da NFC-e (modelo 65). */
+  private validateNFCe(nfe: NFeProps): void {
+    const erros = errosNFCe(nfe);
     if (erros.length > 0) {
       throw new NFeError(erros.join('; '));
     }

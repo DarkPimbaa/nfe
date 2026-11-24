@@ -333,6 +333,19 @@ describe('TransmitNFeUseCase — devolucao (finNFe 4)', () => {
     );
   });
 
+  it('rejeita NFC-e com DFeReferenciado (VC02-04)', async () => {
+    const useCase = useCaseCom();
+    await assert.rejects(
+      () =>
+        useCase.execute({
+          identificacao: { finalidade: 1, modelo: '65', presencaComprador: 1 },
+          produtos: [{ numero: 1, dfeReferenciado: { chaveAcesso: CHAVE } }]
+        } as unknown as NFeProps),
+      (err: unknown) =>
+        err instanceof NFeError && err.message.includes('708')
+    );
+  });
+
   it('rejeita referencia dupla cabecalho+item (VC02-05)', async () => {
     const useCase = useCaseCom();
     await assert.rejects(
