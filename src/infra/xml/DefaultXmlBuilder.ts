@@ -162,7 +162,7 @@ export class DefaultXmlBuilder implements XmlBuilder {
         tag('indPres', String(id.presencaComprador)) +
         tag('indIntermed', String(id.indicadorIntermediador ?? 0)) +
         tag('procEmi', '0') +
-        tag('verProc', 'brasil-fiscal-nfe') +
+        tag('verProc', 'darkpimbaa-nfe') +
         this.buildContingencia(id) +
         this.buildNFref(id.notasReferenciadas) +
         this.buildCompraGovernamental(id.compraGovernamental) +

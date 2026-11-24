@@ -1,4 +1,4 @@
-# Roadmap — @brasil-fiscal/nfe
+# Roadmap — @darkpimbaa/nfe
 
 Este documento descreve as fases de desenvolvimento do projeto. Cada fase tem um escopo bem definido e criterios de conclusao.
 

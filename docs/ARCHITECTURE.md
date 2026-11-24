@@ -1,4 +1,4 @@
-# Arquitetura — @brasil-fiscal/nfe
+# Arquitetura — @darkpimbaa/nfe
 
 ## Visao Geral
 

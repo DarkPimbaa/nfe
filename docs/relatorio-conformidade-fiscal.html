@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatório de Conformidade Fiscal — @DarkPimbaa/nfe</title>
+<style>
+  :root {
+    --green: #1a7f37; --green-bg: #dcfce7;
+    --red: #b42318; --red-bg: #fee4e2;
+    --amber: #b54708; --amber-bg: #fef0c7;
+    --blue: #175cd3; --blue-bg: #eff8ff;
+    --gray: #475467; --line: #e4e7ec;
+    --bg: #f9fafb; --card: #ffffff; --ink: #101828;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif; background: var(--bg); color: var(--ink); margin: 0; line-height: 1.6; }
+  header.hero { background: linear-gradient(135deg, #0b3d2e, #146c43); color: #fff; padding: 2.5rem 1.5rem; }
+  header.hero .wrap, main.wrap { max-width: 1020px; margin: 0 auto; }
+  header.hero h1 { margin: 0 0 .4rem; font-size: 1.9rem; }
+  header.hero p { margin: .2rem 0; opacity: .92; }
+  .verdict { display: inline-block; margin-top: .9rem; background: #fff; color: #0b3d2e; font-weight: 700; padding: .45rem .9rem; border-radius: 999px; }
+  main.wrap { padding: 1.5rem 1.5rem 4rem; }
+  section.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 1.4rem 1.5rem; margin: 1.2rem 0; }
+  h2 { margin-top: 0; font-size: 1.35rem; border-bottom: 2px solid var(--line); padding-bottom: .4rem; }
+  h3 { margin-bottom: .3rem; }
+  .badge { display: inline-block; font-size: .78rem; font-weight: 700; padding: .15rem .6rem; border-radius: 999px; vertical-align: middle; }
+  .ok { background: var(--green-bg); color: var(--green); }
+  .missing { background: var(--red-bg); color: var(--red); }
+  .warn { background: var(--amber-bg); color: var(--amber); }
+  .info { background: var(--blue-bg); color: var(--blue); }
+  .prio { font-size: .78rem; font-weight: 800; padding: .15rem .6rem; border-radius: 6px; }
+  .p0 { background: var(--red); color: #fff; }
+  .p1 { background: #ea580c; color: #fff; }
+  .p2 { background: #64748b; color: #fff; }
+  table { width: 100%; border-collapse: collapse; margin-top: .8rem; font-size: .95rem; }
+  th, td { border: 1px solid var(--line); padding: .55rem .65rem; text-align: left; vertical-align: top; }
+  th { background: #f2f4f7; }
+  details { border: 1px solid var(--line); border-radius: 8px; padding: .6rem .9rem; margin: .5rem 0; background: #fff; }
+  details summary { cursor: pointer; font-weight: 700; }
+  details summary:hover { color: var(--blue); }
+  .gap { border-left: 6px solid #64748b; }
+  .gap.p0b { border-left-color: var(--red); }
+  .gap.p1b { border-left-color: #ea580c; }
+  .filters { margin: .6rem 0 0; }
+  .filters button { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: .35rem 1rem; margin-right: .4rem; cursor: pointer; font-weight: 700; }
+  .filters button.active { background: var(--ink); color: #fff; }
+  .timeline { list-style: none; padding: 0; margin: 0; }
+  .timeline li { position: relative; padding: 0 0 1rem 1.6rem; border-left: 3px solid var(--line); margin-left: .5rem; }
+  .timeline li::before { content: ""; position: absolute; left: -8px; top: 4px; width: 13px; height: 13px; border-radius: 50%; background: var(--blue); }
+  .timeline li.done::before { background: var(--green); }
+  .timeline li.next::before { background: var(--red); }
+  .timeline .date { font-weight: 800; }
+  code { background: #f2f4f7; padding: .1rem .35rem; border-radius: 4px; font-size: .88em; }
+  .files { font-size: .85rem; color: var(--gray); }
+  footer { text-align: center; color: var(--gray); font-size: .85rem; padding: 2rem 1rem; }
+  a { color: var(--blue); }
+  @media print {
+    header.hero { background: #0b3d2e !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    section.card { break-inside: avoid; }
+    .filters { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>Relatório de Conformidade Fiscal</h1>
+    <p><strong>Nossa lib:</strong> <code>@DarkPimbaa/nfe</code> v2.0.7 &nbsp;|&nbsp; <strong>Base:</strong> <code>@darkpimbaa/nfe</code> &nbsp;|&nbsp; <strong>Data:</strong> 24/11/2026 &nbsp;|&nbsp; <strong>Tema:</strong> Reforma Tributária do Consumo (IBS / CBS / IS) na NF-e e NFC-e</p>
+    <p>Base oficial: NT 2025.002-RTC v1.53, NT 2026.008 v1.01, NT 2026.009, Atos Conjuntos RFB/CGIBS nº 4 e nº 7, cClassTrib v1.71.</p>
+    <span class="verdict">Base sólida — 4 gaps reais, 1 com prazo em 14/12/2026</span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="card">
+    <h2>Como ler este relatório</h2>
+    <p>Cada item mostra <strong>o que é</strong> (explicação simples), <strong>como está na lib</strong>, e <strong>por que implementar (ou não)</strong>.</p>
+    <table>
+      <tr><th>Selo</th><th>Significado</th></tr>
+      <tr><td><span class="badge ok">OK</span></td><td>Conformidade verificada no código e no XSD — nada a fazer.</td></tr>
+      <tr><td><span class="badge missing">FALTA</span></td><td>Não existe na lib e a norma exige (ou vai exigir).</td></tr>
+      <tr><td><span class="badge warn">ATENÇÃO</span></td><td>Existe parcial ou o prazo está chegando.</td></tr>
+      <tr><td><span class="prio p0">P0</span></td><td>Crítico: bloqueia emissão ou vence em semanas.</td></tr>
+      <tr><td><span class="prio p1">P1</span></td><td>Importante: evita rejeição SEFAZ / mantém validação local confiável.</td></tr>
+      <tr><td><span class="prio p2">P2</span></td><td>Melhoria: validação que a SEFAZ faz, a lib poderia antecipar.</td></tr>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Linha do tempo oficial — onde estamos</h2>
+    <ul class="timeline">
+      <li class="done"><span class="date">03/08/2026</span> — Marco do Ato Conjunto 4/2026: informar IBS/CBS na NF-e/NFC-e passa a ser obrigatório. Em 06/08 a validação foi flexibilizada (rejeição UB12-10 ficou como "implementação futura" em produção).</li>
+      <li class="done"><span class="date">17/09/2026</span> — <strong>NT 2026.009 em vigor:</strong> devolução e notas de retorno só aceitam CFOP com <code>indDevol=1</code> (Rej. 327). CFOPs 1.949/2.949 liberados.</li>
+      <li class="done"><span class="date">30/10/2026</span> — <strong>NT 2025.002 v1.53</strong> + tabela <strong>cClassTrib v1.71</strong> (18 CSTs, 173 códigos) + Ato Conjunto 10.</li>
+      <li class="done"><span class="date">11/11/2026</span> — <strong>Ato Conjunto 7/2026:</strong> obrigatoriedades escalonadas de dez/2026 a mar/2027 por atividade. Simples Nacional: 01/01/2027.</li>
+      <li class="next"><span class="date">16/11/2026</span> — Produção das regras de <strong>devolução v1.53</strong> (refNFe no cabeçalho ou DFeReferenciado no item) e da <strong>monofasia reformulada v1.50</strong>.</li>
+      <li class="next"><span class="date">14/12/2026</span> — Produção da <strong>NT 2026.008</strong> (valor líquido: <code>vProd</code> sem IBS/CBS/IS + campos novos). <strong>É o prazo mais urgente para a lib.</strong></li>
+      <li><span class="date">2027</span> — Cobrança de <strong>IS</strong> (alíquotas na MP 1.399/2026) e da <strong>CBS</strong>; começa o fim gradual de PIS/Cofins/IPI. Alíquota-teste 1% (0,1% IBS + 0,9% CBS) vira cobrança real.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>✅ O que já está certo (verificado no código e no XSD)</h2>
+    <table>
+      <tr><th>Item</th><th>O que é (simples)</th><th>Status</th></tr>
+      <tr>
+        <td><strong>Grupos IS e IBSCBS no XML</strong></td>
+        <td>Cada item da nota carrega seus impostos novos: o <strong>IS</strong> (Imposto Seletivo) e o bloco <strong>IBSCBS</strong> (IBS + CBS). Na NT eles aparecem sob o apelido "grupo UB", mas <strong>UB não é tag de XML</strong> — é só o nome do capítulo da norma. As tags reais (<code>IS</code>, <code>IBSCBS</code>) são filhas diretas de <code>imposto</code>, nessa ordem. A lib gera exatamente assim.</td>
+        <td><span class="badge ok">OK</span></td>
+      </tr>
+      <tr>
+        <td><strong>Campo <code>pISEspec</code> do IS</strong></td>
+        <td>É a alíquota específica do Imposto Seletivo (valor por unidade, ex.: R$ por litro). Alguns resumos escrevem "adRemIS", mas o XSD oficial usa <code>pISEspec</code> — e a lib usa o nome certo.</td>
+        <td><span class="badge ok">OK</span></td>
+      </tr>
+      <tr>
+        <td><strong><code>nItem</code> opcional no DFeReferenciado</strong></td>
+        <td><strong>DFeReferenciado</strong> é a referência, dentro de cada item, ao documento original (ex.: qual item da nota de venda está sendo devolvido). A v1.53 tornou o número do item opcional. A lib já o trata como opcional.</td>
+        <td><span class="badge ok">OK</span></td>
+      </tr>
+      <tr>
+        <td><strong><code>ICMS40</code> fixo p/ CST 40/41/50 + <code>indIntermed</code> default 0</strong></td>
+        <td><strong>CST</strong> é o código da situação tributária do ICMS. A SEFAZ exige que isenção/não-tributação/suspensão (CST 40, 41 e 50) usem sempre a tag <code>&lt;ICMS40&gt;</code> (antes gerava <code>&lt;ICMS41&gt;</code> e era rejeitada, cStat 225). <strong>indIntermed</strong> diz se houve intermediador/marketplace (0 = venda direta); omiti-lo gera rejeição cStat 434. Ambos corrigidos e commitados na main.</td>
+        <td><span class="badge ok">OK</span></td>
+      </tr>
+      <tr>
+        <td><strong>Totais <code>IBSCBSTot</code>, <code>ISTot</code>, <code>vNFTot</code></strong></td>
+        <td>São os somatórios dos tributos novos no rodapé da nota: totais de IBS (UF + município), CBS, monofasia, estorno de crédito e IS, além do valor total da nota com os tributos da reforma. Implementados em <code>total-groups.ts</code>.</td>
+        <td><span class="badge ok">OK</span></td>
+      </tr>
+      <tr>
+        <td><strong>Regimes do IBS/CBS</strong></td>
+        <td>Casos especiais que mudam o cálculo: <strong>monofasia</strong> (combustíveis: imposto recolhido de uma vez na origem), <strong>diferimento</strong> (pagamento adiado), <strong>redução de alíquota</strong>, <strong>crédito presumido</strong> (desconto presumido, ex.: Zona Franca de Manaus), <strong>transferência de crédito</strong>, <strong>ajuste de competência</strong> e <strong>estorno</strong>. Todos modelados em <code>IbsCbs.ts</code> e gerados em <code>ibscbs-groups.ts</code>.</td>
+        <td><span class="badge ok">OK</span></td>
+      </tr>
+      <tr>
+        <td><strong>Split payment</strong></td>
+        <td>É o "pagamento dividido" da reforma: na hora da venda, o imposto já é separado e vai direto ao fisco. Campos <code>dPag</code>, <code>CNPJPag</code>, <code>idTermPag</code> etc. implementados no pagamento.</td>
+        <td><span class="badge ok">OK</span></td>
+      </tr>
+    </table>
+  </section>
+
+  <section class="card" id="gaps">
+    <h2>❌ O que falta (e por quê)</h2>
+    <div class="filters">
+      <button data-f="all" class="active">Todas</button>
+      <button data-f="p0">P0</button>
+      <button data-f="p1">P1</button>
+      <button data-f="p2">P2</button>
+    </div>
+
+    <section class="card gap p0b" data-p="p0">
+      <h3><span class="prio p0">P0</span> Nota de crédito e de débito (<code>finNFe</code> 5 e 6) bloqueadas <span class="badge missing">FALTA</span></h3>
+      <p><strong>O que é:</strong> <code>finNFe</code> é a <em>finalidade</em> da nota. Além da venda (1), devolução (4) etc., a reforma criou a <strong>nota de crédito (5)</strong> — ex.: conceder desconto ou devolver valor ao cliente — e a <strong>nota de débito (6)</strong> — ex.: cobrar multa/juros depois. Cada uma exige um <em>motivo</em>: <code>tpNFCredito</code> (ex.: 03 = retorno por recusa, 06 = recusa parcial) ou <code>tpNFDebito</code> (ex.: 04 = multa e juros). Criadas pelo Ajuste SINIEF 49/2025, são o mecanismo de ajuste da apuração do IBS/CBS.</p>
+      <p><strong>Como está:</strong> o builder e a entidade já sabem emitir as tags, mas o validador de entrada (<code>src/domain/schemas/nfe-schema.ts:75</code>) só aceita finalidade 1–4. Ou seja: <strong>é impossível emitir crédito/débito pela lib hoje</strong>.</p>
+      <p><strong>Por que implementar:</strong> sem isso, qualquer operação de ajuste pós-venda no regime da reforma não sai pela lib. É mudança pequena (ampliar o Zod + exigir o motivo correspondente + validações de referenciamento).</p>
+      <p class="files">Arquivos: <code>src/domain/schemas/nfe-schema.ts</code>, <code>src/domain/entities/NFe.ts</code>, <code>src/infra/xml/DefaultXmlBuilder.ts</code></p>
+    </section>
+
+    <section class="card gap p0b" data-p="p0">
+      <h3><span class="prio p0">P0</span> NT 2026.008 — "valor líquido" (produção 14/12/2026) <span class="badge warn">ATENÇÃO</span></h3>
+      <p><strong>O que é:</strong> hoje o valor do produto (<code>vProd</code>) e o valor do item (<code>vItem</code>) misturam ou não os tributos conforme regras antigas. A NT 2026.008 redefine: <code>vProd</code> passa a <strong>excluir</strong> IBS/CBS/IS; <code>vItem</code> é o valor <strong>com todos os tributos</strong>; <code>vNFTot</code> é a soma dos <code>vItem</code>. Cria ainda <code>vProdLiq</code> (valor sem tributo algum) e o grupo de ICMS previsto de pagamento antecipado. Regras VB01-10/20 (Rej. 1105) fiscalizam a soma.</p>
+      <p><strong>Como está:</strong> a lib calcula totais no modelo antigo e não tem nenhum dos campos novos (<code>vUnComLiq</code>, <code>vProdLiq</code>, <code>vProdLiqTot</code>, <code>ICMSPrevistoPagtoAntecip</code>).</p>
+      <p><strong>Por que implementar:</strong> é o prazo mais próximo (3 semanas). Sem isso, a validação local aprova XML que a SEFAZ vai rejeitar a partir de 14/12.</p>
+      <p class="files">Arquivos: <code>src/infra/xml/builders/total-groups.ts</code>, <code>produto-groups.ts</code>, entidades e schemas de produto/total</p>
+    </section>
+
+    <section class="card gap p1b" data-p="p1">
+      <h3><span class="prio p1">P1</span> Pacote de schemas desatualizado (anterior à NT v1.40) <span class="badge missing">FALTA</span></h3>
+      <p><strong>O que é:</strong> <strong>schemas XSD</strong> são os arquivos oficiais que definem o formato válido do XML. A lib os acompanha em <code>schemas/</code> e valida tudo contra eles antes de transmitir. Se o pack for antigo, a validação local reprova XML que a SEFAZ aceitaria (falso negativo) — ou aprova estrutura velha.</p>
+      <p><strong>Como está:</strong> faltam no pack campos da NT v1.40 (mai/2026): <code>gALCZFMCBS</code> (alíquota zero de CBS em Área de Livre Comércio/ZFM), <code>cIndOp</code> (indicador de operação, ex.: leilão judicial), <code>ISUFemit</code> (inscrição Suframa do emitente) e <code>refDFeAnt</code> (compras governamentais).</p>
+      <p><strong>Por que implementar:</strong> mantém a validação local confiável. Ação: baixar o pack atual no Portal Nacional da NF-e (Documentos → Notas Técnicas) e comparar — a v1.53 não cita pack novo, então o Portal pode estar atrasado; ainda assim, o conteúdo da v1.40 já deveria constar.</p>
+      <p class="files">Pasta: <code>schemas/</code> (principalmente <code>leiauteNFe_v4.00.xsd</code> e <code>DFeTiposBasicos_v1.00.xsd</code>)</p>
+    </section>
+
+    <section class="card gap p1b" data-p="p1">
+      <h3><span class="prio p1">P1</span> Sem validação <code>cClassTrib × CST × modelo</code> <span class="badge missing">FALTA</span></h3>
+      <p><strong>O que é:</strong> todo item precisa de um par inseparável — o <strong>CST do IBS/CBS</strong> (3 dígitos: a <em>família</em> do tratamento, ex.: 000 = tributação integral, 400 = isenção, 620 = monofasia) e o <strong>cClassTrib</strong> (6 dígitos: o <em>dispositivo legal exato</em>, cujos 3 primeiros repetem o CST). A tabela oficial tem <strong>173 códigos</strong> (v1.71) e diz ainda quais grupos do XML cada código exige e em quais documentos vale (NF-e × NFC-e). Par errado = Rej. <strong>1023</strong> (código inexistente), <strong>1024</strong> (CST incompatível) ou <strong>1025</strong> (código vedado no modelo).</p>
+      <p><strong>Como está:</strong> a lib aceita qualquer texto (<code>min(1).max(6)</code>), sem checar CST, prefixo ou modelo.</p>
+      <p><strong>Por que implementar:</strong> é a causa mais provável de rejeição futura quando a UB12-10 ligar em produção. Mínimo viável: validar os 18 CSTs + prefixo (3 primeiros dígitos = CST) + indicador do modelo; tabela completa de 173 códigos como passo seguinte.</p>
+      <p class="files">Arquivos: <code>src/domain/schemas/produto-schema.ts</code> (+ nova tabela <code>src/shared/constants/cclasstrib.ts</code>)</p>
+    </section>
+
+    <section class="card gap p1b" data-p="p1">
+      <h3><span class="prio p1">P1</span> Devolução: CFOP e referenciamento sem validação <span class="badge warn">ATENÇÃO</span></h3>
+      <p><strong>O que é:</strong> <strong>CFOP</strong> é o código que descreve a operação (ex.: 5.102 = venda dentro do estado, 1.202 = devolução). Desde 17/09/2026 (NT 2026.009), devolução (<code>finNFe=4</code>) e notas de retorno só aceitam CFOP marcado com <code>indDevol=1</code> (Rej. 327). E a v1.53 definiu como referenciar o documento original: <code>refNFe</code> no <strong>cabeçalho</strong> (1 nota) <strong>ou</strong> <code>DFeReferenciado</code> no <strong>item</strong> (várias notas) — nunca os dois (Rej. 321/1010).</p>
+      <p><strong>Como está:</strong> a lib tem a tabela de CFOP (só descrições) e gera os dois tipos de referência, mas <strong>não valida nada</strong>: aceita CFOP errado na devolução e referência duplicada (cabeçalho + item).</p>
+      <p><strong>Por que implementar:</strong> a NT 2026.009 já está em vigor e a regra da devolução produz em 16/11/2026. São validações baratas que evitam rejeição na cara do usuário.</p>
+      <p class="files">Arquivos: <code>src/shared/constants/cfop.ts</code>, use-cases de transmissão/devolução, <code>DefaultXmlBuilder.buildNFref</code></p>
+    </section>
+
+    <section class="card gap" data-p="p2">
+      <h3><span class="prio p2">P2</span> Vedações próprias da NFC-e <span class="badge warn">ATENÇÃO</span></h3>
+      <p><strong>O que é:</strong> a <strong>NFC-e</strong> (modelo 65, cupom do varejo) usa os mesmos grupos de IBS/CBS, mas com proibições: sem <code>DFeReferenciado</code> (Rej. 708), sem devolução de tributo da CBS, sem crédito presumido, sem campos de intermediador/entrega futura, e só códigos <code>cClassTrib</code> liberados para o modelo (indicador <code>indNFCe</code>).</p>
+      <p><strong>Como está / por que (não) implementar agora:</strong> a lib emite NFC-e corretamente nos casos comuns; as vedações só mordem em casos de borda do varejo. Implementar quando a validação <code>cClassTrib</code> (P1) existir, reaproveitando a mesma tabela. Não é urgente.</p>
+    </section>
+  </section>
+
+  <section class="card">
+    <h2>📖 Glossário didático</h2>
+    <p>Clique em cada termo para entender.</p>
+    <details><summary>CFOP — Código Fiscal de Operações</summary><p>Todo item da nota diz <em>o que aconteceu</em> com a mercadoria através de 4 dígitos: o 1º indica o tipo de movimento (1 = entrada, 5 = saída dentro do estado, 6 = saída para outro estado...). Ex.: <code>5102</code> = venda de mercadoria dentro do estado. A SEFAZ usa o CFOP para saber se a operação fecha com a finalidade da nota (venda, devolução, retorno...).</p></details>
+    <details><summary>CST — Código de Situação Tributária (ICMS e IBS/CBS)</summary><p>Diz <em>como o imposto trata</em> aquele item: tributado, isento, com redução, suspenso etc. Existem dois mundos: o <strong>CST do ICMS</strong> (2 dígitos, ex.: 00, 40, 102/CSOSN do Simples) e o <strong>CST do IBS/CBS</strong> (3 dígitos, 18 valores, ex.: 000 = integral, 620 = monofasia). Não confundir os dois.</p></details>
+    <details><summary>cClassTrib — Classificação Tributária (6 dígitos)</summary><p>É o "endereço exato na lei" do tratamento fiscal: os 3 primeiros dígitos repetem o CST e os 3 últimos apontam o dispositivo da LC 214/2025. A tabela oficial (v1.71: 173 códigos) ainda informa quais grupos do XML são obrigatórios para cada código. É o mapeamento mais trabalhoso da reforma.</p></details>
+    <details><summary>IBS — Imposto sobre Bens e Serviços</summary><p>Substitui ICMS (estados) e ISS (municípios). Competência de estados + municípios, dividido em IBS-UF e IBS-Mun na nota. Em 2026, alíquota-teste de 0,1%.</p></details>
+    <details><summary>CBS — Contribuição sobre Bens e Serviços</summary><p>Substitui PIS, Cofins (e aos poucos o IPI). É federal. Em 2026, alíquota-teste de 0,9%; cobrança real a partir de 2027.</p></details>
+    <details><summary>IS — Imposto Seletivo ("imposto do pecado")</summary><p>Incide sobre produção/comercialização de bens prejudiciais à saúde e ao meio ambiente (bebidas, tabaco, veículos etc.). Cobrança começa em 2027, com alíquotas na MP 1.399/2026.</p></details>
+    <details><summary>finNFe — Finalidade da nota</summary><p>1 = normal, 2 = complementar, 3 = ajuste, 4 = devolução, <strong>5 = crédito, 6 = débito</strong> (novos, da reforma). Crédito/débito ajustam valores de operações já ocorridas para fins de apuração do IBS/CBS.</p></details>
+    <details><summary>DFeReferenciado × NFref (refNFe)</summary><p>Duas formas de apontar "esta nota se refere àquela": <code>NFref/refNFe</code> vai no <strong>cabeçalho</strong> (1 documento) e <code>DFeReferenciado</code> vai no <strong>item</strong> (permite ratear itens de várias notas). Na devolução, vale um ou outro — nunca os dois.</p></details>
+    <details><summary>vProd × vItem × vNF × vNFTot</summary><p><code>vProd</code> = valor da mercadoria; <code>vItem</code> = item com tributos; <code>vNF</code> = total clássico da nota; <code>vNFTot</code> = total novo incluindo IBS/CBS/IS. A NT 2026.008 redefine essas somas a partir de 14/12/2026.</p></details>
+    <details><summary>Monofasia</summary><p>Regime de combustíveis/biocombustíveis em que o imposto da cadeia inteira é recolhido de uma vez na origem (alíquota por quantidade, "ad rem"). Reformulado na NT v1.50 (produção 16/11/2026).</p></details>
+    <details><summary>Crédito presumido / diferimento / transferência</summary><p><strong>Crédito presumido:</strong> desconto de imposto presumido por lei (ex.: ZFM). <strong>Diferimento:</strong> pagamento do imposto adiado para etapa posterior. <strong>Transferência de crédito:</strong> passar saldo de crédito a outro estabelecimento. <strong>Estorno:</strong> anular crédito lançado.</p></details>
+    <details><summary>NT, XSD, SEFAZ, homologação × produção</summary><p><strong>NT</strong> (Nota Técnica) = manual oficial de mudanças no leiaute. <strong>XSD</strong> = arquivo que define o formato válido do XML (a lib valida contra ele). <strong>SEFAZ</strong> = Secretaria da Fazenda estadual, que autoriza cada nota. <strong>Homologação</strong> = ambiente de teste; <strong>produção</strong> = ambiente real, com dinheiro e imposto de verdade.</p></details>
+    <details><summary>Ato Conjunto RFB/CGIBS</summary><p>Norma assinada pela Receita Federal + Comitê Gestor do IBS que define cronogramas e aprova tabelas (como a cClassTrib). O nº 4/2026 fixou o marco de 03/08/2026; o nº 7/2026 escalonou dez/2026–mar/2027.</p></details>
+    <details><summary>Simples Nacional na reforma</summary><p>Optantes têm calendário próprio (marco em 01/01/2027) e seguem com CSOSN no ICMS por enquanto. A lib já trata CSOSN 101/201/202/500/900.</p></details>
+  </section>
+
+  <section class="card">
+    <h2>🔗 Fontes oficiais consultadas</h2>
+    <ul>
+      <li><a href="https://www.tax360.com.br/conteudo/nt-nfe-nfce-2025-002-rtc-v153">NT 2025.002 v1.53 — devolução (Tax360, com link ao PDF oficial)</a></li>
+      <li><a href="https://www.tax360.com.br/conteudo/nt-nfe-nfce-2025-002-rtc-v150">NT 2025.002 v1.50 — monofasia (Tax360)</a></li>
+      <li><a href="https://taxup.com.br/solucoes/reforma-tributaria/layout-nfe-nt-2025-002/">NT 2025.002 v1.51 — layout completo (TaxUp)</a></li>
+      <li><a href="https://www.tax360.com.br/conteudo/tabela-classificacao-tributaria-ibs-cbs-cclasstrib">Tabela cClassTrib v1.71 (Tax360)</a></li>
+      <li><a href="https://www.gov.br/receitafederal/pt-br/acesso-a-informacao/acoes-e-programas/reforma-tributaria-do-consumo/orientacoes-da-reforma-tributaria/cronograma">Cronograma oficial dos documentos fiscais (Receita Federal)</a></li>
+      <li><a href="https://www.gov.br/fazenda/pt-br/assuntos/noticias/2026/agosto/receita-federal-e-cgibs-flexibilizarao-obrigatoriedade-de-informacoes-em-documentos-fiscais">Flexibilização de ago/2026 (Ministério da Fazenda)</a></li>
+      <li><a href="https://www.cgibs.gov.br/novo-marco-da-reforma-tributaria-inicia-no-dia-03-de-agosto-com-preenchimento-obrigatorio-dos-campos-relativos-ao-ibs-e-a-cbs">Marco de 03/08/2026 (CGIBS)</a></li>
+      <li><a href="https://www.gov.br/fazenda/pt-br/assuntos/noticias/2026/novembro/governo-federal-define-aliquotas-do-imposto-seletivo-para-2027-por-meio-de-medida-provisoria">MP 1.399/2026 — alíquotas do IS 2027 (Fazenda)</a></li>
+    </ul>
+  </section>
+
+</main>
+
+<footer>
+  Gerado em 24/11/2026 a partir do código da workspace (<code>@DarkPimbaa/nfe</code> main, fork de <code>@darkpimbaa/nfe</code>) e das fontes oficiais acima.
+  UB12-10 segue em "implementação futura" em produção — informar IBS/CBS é obrigatório, a rejeição ainda não liga.
+</footer>
+
+<script>
+  const btns = document.querySelectorAll('.filters button');
+  const gaps = document.querySelectorAll('#gaps .gap');
+  btns.forEach(b => b.addEventListener('click', () => {
+    btns.forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    const f = b.dataset.f;
+    gaps.forEach(g => { g.style.display = (f === 'all' || g.dataset.p === f) ? '' : 'none'; });
+  }));
+</script>
+
+</body>
+</html>

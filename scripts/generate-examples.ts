@@ -87,7 +87,7 @@ const sampleNFe: NFeProps = {
       { formaPagamento: '01', valor: 2500.00 }
     ]
   },
-  informacoesComplementares: 'Venda realizada em ambiente de homologacao - Sem valor fiscal. Documento emitido por @brasil-fiscal/nfe.'
+  informacoesComplementares: 'Venda realizada em ambiente de homologacao - Sem valor fiscal. Documento emitido por @darkpimbaa/nfe.'
 };
 
 async function main(): Promise<void> {

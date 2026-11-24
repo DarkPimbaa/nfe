@@ -1,4 +1,4 @@
-# Exemplos de Uso — @brasil-fiscal/nfe
+# Exemplos de Uso — @darkpimbaa/nfe
 
 Exemplos completos de como usar a lib. Todos os exemplos usam SEFAZ MT em homologacao.
 
@@ -9,7 +9,7 @@ Exemplos completos de como usar a lib. Todos os exemplos usam SEFAZ MT em homolo
 A forma mais simples de usar a lib. Configure uma vez, use em tudo:
 
 ```typescript
-import { NFeCore } from '@brasil-fiscal/nfe';
+import { NFeCore } from '@darkpimbaa/nfe';
 import { readFileSync } from 'node:fs';
 
 const nfe = NFeCore.create({
@@ -92,7 +92,7 @@ A mesma `NFeCore` emite NFe (modelo 55) e NFC-e (modelo 65). O modelo eh definid
 Para NFC-e, voce precisa do `cIdToken` e `csc` (Codigo de Seguranca do Contribuinte), fornecidos pela SEFAZ do seu estado:
 
 ```typescript
-import { NFeCore } from '@brasil-fiscal/nfe';
+import { NFeCore } from '@darkpimbaa/nfe';
 import { readFileSync } from 'node:fs';
 
 const core = NFeCore.create({
@@ -248,7 +248,7 @@ const result = await core.transmitir({
 Se voce precisa gerar a URL do QR Code por conta propria:
 
 ```typescript
-import { buildNFCeQRCodeUrl, getNFCeQRCodeUrl, getNFCeConsultaUrl } from '@brasil-fiscal/nfe';
+import { buildNFCeQRCodeUrl, getNFCeQRCodeUrl, getNFCeConsultaUrl } from '@darkpimbaa/nfe';
 
 const qrCodeUrl = buildNFCeQRCodeUrl({
   urlQRCode: getNFCeQRCodeUrl('MT', 'homologacao'),
@@ -284,7 +284,7 @@ import {
   DefaultXmlBuilder,
   DefaultXmlSigner,
   NodeHttpSefazTransport
-} from '@brasil-fiscal/nfe';
+} from '@darkpimbaa/nfe';
 
 // Certificado A1
 const certificate = new A1CertificateProvider(
@@ -392,7 +392,7 @@ const signedXml = xmlSigner.sign(xml, cert);
 ## 3. Transmitir para SEFAZ
 
 ```typescript
-import { TransmitNFeUseCase } from '@brasil-fiscal/nfe';
+import { TransmitNFeUseCase } from '@darkpimbaa/nfe';
 
 const transmitir = new TransmitNFeUseCase({
   xmlBuilder,
@@ -417,7 +417,7 @@ if (result.autorizada) {
 ## 4. Consultar protocolo
 
 ```typescript
-import { ConsultProtocolUseCase } from '@brasil-fiscal/nfe';
+import { ConsultProtocolUseCase } from '@darkpimbaa/nfe';
 
 const consultar = new ConsultProtocolUseCase({
   certificate,
@@ -436,7 +436,7 @@ console.log(result.protocolo);
 ## 5. Cancelar NFe
 
 ```typescript
-import { CancelaNFeUseCase } from '@brasil-fiscal/nfe';
+import { CancelaNFeUseCase } from '@darkpimbaa/nfe';
 
 const cancelar = new CancelaNFeUseCase({
   certificate,
@@ -463,7 +463,7 @@ Só NFC-e (modelo 65): a NFC-e errada é cancelada referenciando a NFC-e correta
 que a substitui. Emita primeiro a NFC-e correta, depois cancele a errada.
 
 ```typescript
-import { CancelaSubstituicaoUseCase } from '@brasil-fiscal/nfe';
+import { CancelaSubstituicaoUseCase } from '@darkpimbaa/nfe';
 
 const substituir = new CancelaSubstituicaoUseCase({
   certificate,
@@ -497,7 +497,7 @@ await core.cancelarSubstituicao({
 ## 6. Carta de Correcao (CC-e)
 
 ```typescript
-import { CartaCorrecaoUseCase } from '@brasil-fiscal/nfe';
+import { CartaCorrecaoUseCase } from '@darkpimbaa/nfe';
 
 const corrigir = new CartaCorrecaoUseCase({
   certificate,
@@ -527,7 +527,7 @@ const result2 = await corrigir.execute({
 ## 7. Inutilizar numeracao
 
 ```typescript
-import { InutilizaNFeUseCase } from '@brasil-fiscal/nfe';
+import { InutilizaNFeUseCase } from '@darkpimbaa/nfe';
 
 const inutilizar = new InutilizaNFeUseCase({
   certificate,
@@ -554,7 +554,7 @@ console.log(result.cStat); // '102' = inutilizacao homologada
 ## 8. Consultar NFes recebidas (Distribuicao DFe)
 
 ```typescript
-import { DistribuicaoDFeUseCase } from '@brasil-fiscal/nfe';
+import { DistribuicaoDFeUseCase } from '@darkpimbaa/nfe';
 
 const distribuicao = new DistribuicaoDFeUseCase({
   certificate,
@@ -589,7 +589,7 @@ const result2 = await distribuicao.consultarPorChave(
 ## 9. Manifestacao do Destinatario
 
 ```typescript
-import { ManifestacaoUseCase } from '@brasil-fiscal/nfe';
+import { ManifestacaoUseCase } from '@darkpimbaa/nfe';
 
 const manifestacao = new ManifestacaoUseCase({
   certificate,
@@ -629,7 +629,7 @@ await manifestacao.naoRealizada({
 > Requer `pdfkit` instalado: `npm install pdfkit`
 
 ```typescript
-import { GerarDanfeUseCase } from '@brasil-fiscal/nfe';
+import { GerarDanfeUseCase } from '@darkpimbaa/nfe';
 import { writeFileSync } from 'node:fs';
 
 const danfe = new GerarDanfeUseCase();
@@ -653,7 +653,7 @@ import {
   CertificateError,
   SefazRejectError,
   NFeError
-} from '@brasil-fiscal/nfe';
+} from '@darkpimbaa/nfe';
 
 try {
   const result = await transmitir.execute(nfeData);

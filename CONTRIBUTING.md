@@ -1,4 +1,4 @@
-# Contributing to @brasil-fiscal/nfe
+# Contributing to @darkpimbaa/nfe
 
 Obrigado por considerar contribuir! Este guia explica como participar do projeto.
 
@@ -6,7 +6,7 @@ Obrigado por considerar contribuir! Este guia explica como participar do projeto
 
 ### Reportando bugs
 
-1. Verifique se ja existe uma [issue](https://github.com/brasil-fiscal/nfe/issues) aberta
+1. Verifique se ja existe uma [issue](https://github.com/DarkPimbaa/nfe/issues) aberta
 2. Crie uma nova issue com:
    - Descricao clara do problema
    - Passos para reproduzir
@@ -35,7 +35,7 @@ Clone único — o `@brasil-fiscal/core` é o workspace `./core`, linkado via
 `workspaces` no `package.json`:
 
 ```
-nfe/          ← este repo (pacote @brasil-fiscal/nfe na raiz)
+nfe/          ← este repo (pacote @darkpimbaa/nfe na raiz)
   core/       ← pacote @brasil-fiscal/core (fonte local, evolve junto)
   src/ tests/ schemas/ docs/ …
 ```

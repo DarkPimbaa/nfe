@@ -1,6 +1,6 @@
 # Providers — Como Criar Providers Customizados
 
-A lib `@brasil-fiscal/nfe` usa o padrao Provider/Plugin. Cada integracao externa eh definida por um contrato (interface). Voce pode substituir qualquer implementacao padrao pela sua propria.
+A lib `@darkpimbaa/nfe` usa o padrao Provider/Plugin. Cada integracao externa eh definida por um contrato (interface). Voce pode substituir qualquer implementacao padrao pela sua propria.
 
 ## Contratos disponiveis
 
@@ -17,7 +17,7 @@ A lib `@brasil-fiscal/nfe` usa o padrao Provider/Plugin. Cada integracao externa
 Exemplo: provider que carrega certificado de um cofre (vault).
 
 ```typescript
-import type { CertificateProvider, CertificateData } from '@brasil-fiscal/nfe';
+import type { CertificateProvider, CertificateData } from '@darkpimbaa/nfe';
 
 export class VaultCertificateProvider implements CertificateProvider {
   constructor(
@@ -43,7 +43,7 @@ export class VaultCertificateProvider implements CertificateProvider {
 Uso:
 
 ```typescript
-import { TransmitNFeUseCase, DefaultXmlBuilder, DefaultXmlSigner, NodeHttpSefazTransport } from '@brasil-fiscal/nfe';
+import { TransmitNFeUseCase, DefaultXmlBuilder, DefaultXmlSigner, NodeHttpSefazTransport } from '@darkpimbaa/nfe';
 
 const transmitir = new TransmitNFeUseCase({
   xmlBuilder: new DefaultXmlBuilder(),
@@ -60,7 +60,7 @@ const transmitir = new TransmitNFeUseCase({
 Exemplo: provider que usa um proxy interno para comunicacao com a SEFAZ.
 
 ```typescript
-import type { SefazTransport, SefazRequest, SefazResponse } from '@brasil-fiscal/nfe';
+import type { SefazTransport, SefazRequest, SefazResponse } from '@darkpimbaa/nfe';
 
 export class ProxySefazTransport implements SefazTransport {
   constructor(private readonly proxyUrl: string) {}
@@ -90,8 +90,8 @@ export class ProxySefazTransport implements SefazTransport {
 Exemplo: provider que gera XML usando uma lib externa.
 
 ```typescript
-import type { XmlBuilder } from '@brasil-fiscal/nfe';
-import type { NFeProps } from '@brasil-fiscal/nfe';
+import type { XmlBuilder } from '@darkpimbaa/nfe';
+import type { NFeProps } from '@darkpimbaa/nfe';
 
 export class CustomXmlBuilder implements XmlBuilder {
   build(nfe: NFeProps): string {
@@ -114,7 +114,7 @@ export class CustomXmlBuilder implements XmlBuilder {
 
 Se voce criar um provider util para a comunidade, considere publicar como pacote npm:
 
-- Nome sugerido: `@brasil-fiscal/nfe-provider-<nome>`
-- Adicione `@brasil-fiscal/nfe` como `peerDependency`
+- Nome sugerido: `@darkpimbaa/nfe-provider-<nome>`
+- Adicione `@darkpimbaa/nfe` como `peerDependency`
 - Inclua testes e documentacao
 - Abra uma issue no repositorio principal para ser listado no README

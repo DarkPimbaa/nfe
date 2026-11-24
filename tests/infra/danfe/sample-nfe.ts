@@ -25,7 +25,7 @@ export const SAMPLE_NFE_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <indFinal>1</indFinal>
 <indPres>1</indPres>
 <procEmi>0</procEmi>
-<verProc>brasil-fiscal-nfe</verProc>
+<verProc>darkpimbaa-nfe</verProc>
 </ide>
 <emit>
 <CNPJ>12345678000195</CNPJ>
@@ -184,7 +184,7 @@ export const SAMPLE_NFE_XML = `<?xml version="1.0" encoding="UTF-8"?>
 </detPag>
 </pag>
 <infAdic>
-<infCpl>Venda realizada em ambiente de homologacao - Sem valor fiscal. Documento emitido por brasil-fiscal-nfe.</infCpl>
+<infCpl>Venda realizada em ambiente de homologacao - Sem valor fiscal. Documento emitido por darkpimbaa-nfe.</infCpl>
 </infAdic>
 </infNFe>
 </NFe>

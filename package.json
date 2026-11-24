@@ -1,5 +1,5 @@
 {
-  "name": "@brasil-fiscal/nfe",
+  "name": "@darkpimbaa/nfe",
   "version": "2.0.7",
   "description": "Lib open-source para emissao de NFe (Nota Fiscal Eletronica) em TypeScript. Arquitetura limpa, zero dependencias, plugavel.",
   "main": "dist/index.js",
@@ -44,12 +44,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/brasil-fiscal/nfe.git"
+    "url": "git+https://github.com/DarkPimbaa/nfe.git"
   },
   "bugs": {
-    "url": "https://github.com/brasil-fiscal/nfe/issues"
+    "url": "https://github.com/DarkPimbaa/nfe/issues"
   },
-  "homepage": "https://github.com/brasil-fiscal/nfe#readme",
+  "homepage": "https://github.com/DarkPimbaa/nfe#readme",
   "engines": {
     "node": ">=18.0.0"
   },

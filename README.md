@@ -1,11 +1,11 @@
-# @brasil-fiscal/nfe
+# @darkpimbaa/nfe
 
-Lib open-source em TypeScript para emissao de **NFe (Nota Fiscal Eletronica)** e **NFC-e (Nota Fiscal de Consumidor Eletronica)** no Brasil. Arquitetura limpa, totalmente plugavel. Parte do ecossistema [`@brasil-fiscal`](https://github.com/brasil-fiscal).
+Lib open-source em TypeScript para emissao de **NFe (Nota Fiscal Eletronica)** e **NFC-e (Nota Fiscal de Consumidor Eletronica)** no Brasil. Arquitetura limpa, totalmente plugavel. Fork independente do [`@brasil-fiscal/nfe`](https://github.com/brasil-fiscal/nfe), mantido em [`DarkPimbaa/nfe`](https://github.com/DarkPimbaa/nfe).
 
 ## Instalacao
 
 ```bash
-npm install @brasil-fiscal/nfe
+npm install @darkpimbaa/nfe
 ```
 
 Para gerar DANFE (PDF), instale tambem:
@@ -66,7 +66,7 @@ npm install pdfkit
 ## Quick Start
 
 ```typescript
-import { NFeCore } from '@brasil-fiscal/nfe';
+import { NFeCore } from '@darkpimbaa/nfe';
 import { readFileSync } from 'node:fs';
 
 const nfe = NFeCore.create({
@@ -178,7 +178,7 @@ O QR Code e a `urlChave` sao gerados e inseridos no `infNFeSupl` automaticamente
 ### Gerar cupom NFC-e (PDF 80mm)
 
 ```typescript
-import { GerarCupomUseCase } from '@brasil-fiscal/nfe';
+import { GerarCupomUseCase } from '@darkpimbaa/nfe';
 
 const pdf = await new GerarCupomUseCase().execute(result.xmlProtocolado!);
 writeFileSync('cupom.pdf', pdf);
@@ -482,7 +482,7 @@ Os valores sao calculados pela aliquota efetiva quando ha reducao, e somados no
 ### Municipios e paises
 
 ```typescript
-import { getMunicipio, findCodigoMunicipio, getUfDoMunicipio, getPais } from '@brasil-fiscal/nfe';
+import { getMunicipio, findCodigoMunicipio, getUfDoMunicipio, getPais } from '@darkpimbaa/nfe';
 
 getMunicipio('5103403');                  // 'Cuiabá'
 findCodigoMunicipio('SP', 'sao paulo');   // '3550308' (ignora acento e caixa)
@@ -504,7 +504,7 @@ console.log(cert.diasParaVencer); // 137
 ### Validar XSD de outros documentos
 
 ```typescript
-import { XsdSchemaValidator } from '@brasil-fiscal/nfe';
+import { XsdSchemaValidator } from '@darkpimbaa/nfe';
 
 const validator = new XsdSchemaValidator();
 
@@ -523,7 +523,7 @@ falha de rede/timeout propaga o erro original. A lib **nunca retorna
 `consultarProtocolo(chave)` antes de reemitir.
 
 ```typescript
-import { SefazRejectError, CertificateError, NFeError } from '@brasil-fiscal/nfe';
+import { SefazRejectError, CertificateError, NFeError } from '@darkpimbaa/nfe';
 
 try {
   const result = await nfe.transmitir(nfeData);
@@ -552,7 +552,7 @@ A lib usa o padrao Provider. Cada integracao externa eh uma interface que voce p
 |----------|-----------|---------|--------|
 | `CertificateProvider` | Carrega certificados digitais | `A1CertificateProvider` (.pfx/.p12) | `@brasil-fiscal/core` |
 | `SefazTransport` | Comunicacao HTTP com a SEFAZ | `NodeHttpSefazTransport` (mTLS) | `@brasil-fiscal/core` |
-| `XmlBuilder` | Gera XML a partir das entidades | `DefaultXmlBuilder` | `@brasil-fiscal/nfe` |
+| `XmlBuilder` | Gera XML a partir das entidades | `DefaultXmlBuilder` | `@darkpimbaa/nfe` |
 | `XmlSigner` | Assina XML com certificado digital | `DefaultXmlSigner` | `@brasil-fiscal/core` |
 
 Para criar seu proprio provider, veja [docs/PROVIDERS.md](docs/PROVIDERS.md).
@@ -564,7 +564,7 @@ Este pacote usa [`@brasil-fiscal/core`](https://github.com/brasil-fiscal/core) p
 ```
 @brasil-fiscal/core          Certificado A1, XMLDSig, mTLS, CNPJ/CPF, UF codes
       |
-@brasil-fiscal/nfe           NFe + NFC-e (este pacote)
+@darkpimbaa/nfe           NFe + NFC-e (este pacote)
       |
       src/
         core/                 Fachada (NFeCore) e tipos
@@ -582,7 +582,7 @@ Para detalhes completos, veja [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 | Pacote | Status | Descricao |
 |--------|--------|-----------|
 | [@brasil-fiscal/core](https://github.com/brasil-fiscal/core) | Estavel | Infraestrutura compartilhada |
-| **@brasil-fiscal/nfe** | Estavel | NFe e NFC-e (este pacote) |
+| **@darkpimbaa/nfe** | Estavel | NFe e NFC-e (este pacote) |
 | [@brasil-fiscal/cte](https://github.com/brasil-fiscal/cte) | Em desenvolvimento | CTe |
 | [@brasil-fiscal/mdfe](https://github.com/brasil-fiscal/mdfe) | Em desenvolvimento | MDFe |
 | [@brasil-fiscal/sped-fiscal](https://github.com/brasil-fiscal/sped-fiscal) | Em desenvolvimento | EFD ICMS/IPI (SPED Fiscal) |
@@ -617,7 +617,7 @@ Para regenerar: `npx tsx scripts/generate-examples.ts`
 ## Desenvolvimento
 
 ```bash
-git clone https://github.com/brasil-fiscal/nfe.git
+git clone https://github.com/DarkPimbaa/nfe.git
 cd nfe
 npm install
 npm test
