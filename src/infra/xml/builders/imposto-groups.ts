@@ -219,6 +219,17 @@ export function buildICMS(prod: ProdutoProps): string {
       ? tag('pRedBC', formatNumber(icms.percentualReducaoBase, 4))
       : '';
 
+  // ICMSPrevistoPagtoAntecip (NT 2026.008) substitui o grupo quando ha pagamento antecipado.
+  if (icms.pagamentoAntecipado) {
+    return tagGroup(
+      'ICMS',
+      tagGroup(
+        'ICMSPrevistoPagtoAntecip',
+        tag('vICMSPrevisto', formatNumber(icms.pagamentoAntecipado.valorPrevisto, 2))
+      )
+    );
+  }
+
   // ICMSPart e ICMSST substituem o grupo do CST quando pedidos explicitamente.
   if (icms.percentualBaseOperacaoPropria !== undefined && icms.ufSt) {
     return tagGroup(

@@ -172,6 +172,8 @@ export type NFeProps = {
   readonly processosReferenciados?: readonly ProcessoReferenciadoProps[];
   /** vNFTot — valor total da NFe com os tributos da reforma (RTC). */
   readonly valorTotalNota?: number;
+  /** vProdLiqTot — soma dos valores liquidos dos itens (NT 2026.008). */
+  readonly valorProdutoLiquidoTotal?: number;
   /** Totais de servico (ISSQNtot) e retencoes de tributos federais (retTrib). */
   readonly totaisServico?: TotaisServicoProps;
   readonly retencoesTributos?: RetencoesTributosProps;

@@ -83,7 +83,10 @@ export const icmsSchema = z.object({
       percentualDiferimento: z.number().min(0).max(100).optional(),
       valorDiferido: z.number().min(0).optional(),
       quantidadeDiferida: z.number().min(0).optional(),
-      aliquotaAdRemDiferida: z.number().min(0).optional()
+      aliquotaAdRemDiferida: z.number().min(0).optional(),
+      pagamentoAntecipado: z
+        .object({ valorPrevisto: z.number().min(0) })
+        .optional()
     })
     .optional()
 });
@@ -289,6 +292,8 @@ export const produtoSchema = z.object({
   quantidade: z.number().positive(),
   valorUnitario: z.number().min(0),
   valorTotal: z.number().min(0),
+  valorUnitarioLiquido: z.number().min(0).optional(),
+  valorProdutoLiquido: z.number().min(0).optional(),
   valorDesconto: z.number().min(0).optional(),
   valorFrete: z.number().min(0).optional(),
   valorSeguro: z.number().min(0).optional(),

@@ -1,4 +1,5 @@
-import { NFeProps } from '@nfe/domain/entities/NFe';
+import { NFeProps, NFeIdentificacao } from '@nfe/domain/entities/NFe';
+import { ProdutoProps } from '@nfe/domain/entities/Produto';
 import { tag, tagGroup, formatNumber, formatDateOnly } from '../xml-helper';
 import { totaisIbsCbsDoItem } from './ibscbs-groups';
 
@@ -68,6 +69,8 @@ type Acumulado = {
   vIBSMun: number;
   vCBS: number;
   temIbsCbs: boolean;
+  vProdLiqTot: number;
+  temProdLiq: boolean;
 };
 
 function acumular(nfe: NFeProps): Acumulado {
@@ -128,7 +131,9 @@ function acumular(nfe: NFeProps): Acumulado {
     vIBSUF: 0,
     vIBSMun: 0,
     vCBS: 0,
-    temIbsCbs: false
+    temIbsCbs: false,
+    vProdLiqTot: 0,
+    temProdLiq: false
   };
 
   for (const prod of nfe.produtos) {
@@ -193,6 +198,11 @@ function acumular(nfe: NFeProps): Acumulado {
       if (dest.aliquotaFcp !== undefined) {
         a.vFCPUFDest += ((dest.baseCalculoFcp ?? base) * dest.aliquotaFcp) / 100;
       }
+    }
+
+    if (prod.valorProdutoLiquido !== undefined) {
+      a.temProdLiq = true;
+      a.vProdLiqTot += prod.valorProdutoLiquido;
     }
 
     if (prod.impostoSeletivo) {
@@ -400,9 +410,130 @@ export function buildTotais(nfe: NFeProps): string {
   const isTot = a.temIS ? tagGroup('ISTot', tag('vIS', formatNumber(a.vIS, 2))) : '';
   const vNFTot =
     nfe.valorTotalNota !== undefined ? tag('vNFTot', formatNumber(nfe.valorTotalNota, 2)) : '';
+  const vProdLiqTot = a.temProdLiq
+    ? tag('vProdLiqTot', formatNumber(a.vProdLiqTot, 2))
+    : '';
 
   return tagGroup(
     'total',
-    icmsTot + buildISSQNtot(nfe) + buildRetTrib(nfe) + isTot + ibsCbsTot + vNFTot
+    vProdLiqTot + icmsTot + buildISSQNtot(nfe) + buildRetTrib(nfe) + isTot + ibsCbsTot + vNFTot
   );
+}
+
+/** Tolerancia monetaria das comparacoes de totais (R$ 0,01). */
+const TOLERANCIA_TOTAL = 0.01;
+
+function difere(informado: number, calculado: number): boolean {
+  return Math.abs(informado - calculado) > TOLERANCIA_TOTAL;
+}
+
+/**
+ * Valor total do item (`vItem`, NT 2026.008): o valor do produto com todos os
+ * tributos. IBS, CBS, IS (e a monofasia propria) so somam a partir de 2027,
+ * por causa da Excecao 1 da VB01-10 (em 2025/2026 ficam de fora), e nunca em
+ * importacao (CFOP iniciado por "3", Excecao 2).
+ *
+ * Arredonda para centavos, como a SEFAZ compara.
+ */
+export function calcularVItem(prod: ProdutoProps, ano: number): number {
+  const icms = prod.icms;
+  const somarReforma = ano >= 2027 && !prod.cfop.startsWith('3');
+
+  let v =
+    prod.valorTotal -
+    (prod.valorDesconto ?? 0) +
+    (prod.valorFrete ?? 0) +
+    (prod.valorSeguro ?? 0) +
+    (prod.outrasDespesas ?? 0) +
+    (prod.ipi?.valor ?? 0) +
+    (prod.ii?.valor ?? 0);
+
+  const baseST = icms.baseCalculoST ?? 0;
+  v += icms.valorST ?? (baseST * (icms.aliquotaST ?? 0)) / 100;
+
+  if (icms.aliquotaFcp !== undefined) {
+    const base = icms.baseCalculoFcp ?? icms.baseCalculo ?? 0;
+    v += icms.valorFcp ?? (base * icms.aliquotaFcp) / 100;
+  }
+  if (icms.aliquotaFcpST !== undefined) {
+    const base = icms.baseCalculoFcpST ?? baseST;
+    v += icms.valorFcpST ?? (base * icms.aliquotaFcpST) / 100;
+  }
+
+  if (somarReforma) {
+    const t = totaisIbsCbsDoItem(prod);
+    if (t) v += t.ibsUf + t.ibsMun + t.cbs + t.monoIbs + t.monoCbs;
+    if (prod.impostoSeletivo) v += prod.impostoSeletivo.valor;
+  }
+
+  return Math.round(v * 100) / 100;
+}
+
+/**
+ * Soma dos `vItem` (`vNFTot`, NT 2026.008). Usa a data de emissao da nota
+ * para aplicar a Excecao 1 (2025/2026) da VB01-10.
+ */
+export function calcularVNFTot(nfe: NFeProps): number {
+  const ano = nfe.identificacao.dataEmissao?.getFullYear() ?? new Date().getFullYear();
+  const soma = nfe.produtos.reduce((acc, prod) => acc + calcularVItem(prod, ano), 0);
+  return Math.round(soma * 100) / 100;
+}
+
+/**
+ * Confere os totais informados contra o calculado e devolve a lista de
+ * divergencias (vazia = tudo certo). Espelha as regras da SEFAZ sem bloquear
+ * a emissao — quem chama decide se avisa ou rejeita:
+ *
+ * - VB01-10 (Rej. 1105): `vItem` x calculado (com Excecoes 1 e 2);
+ * - I11c-20 (Rej. 1279): `vProdLiq` = `vUnComLiq` x `qCom`;
+ * - W01a (Rej. 1282/1283): `vProdLiqTot` = soma dos `vProdLiq`;
+ * - `vNFTot` (`valorTotalNota`) = soma dos `vItem`.
+ */
+export function validarTotais(nfe: NFeProps): string[] {
+  const divergencias: string[] = [];
+  const id: NFeIdentificacao = nfe.identificacao;
+  const ano = id.dataEmissao?.getFullYear() ?? new Date().getFullYear();
+
+  nfe.produtos.forEach((prod, i) => {
+    const rotulo = `Item ${prod.numero ?? i + 1}`;
+
+    if (prod.valorItem !== undefined) {
+      const calculado = calcularVItem(prod, ano);
+      if (difere(prod.valorItem, calculado)) {
+        divergencias.push(
+          `${rotulo}: vItem ${formatNumber(prod.valorItem, 2)} diverge do calculado ${formatNumber(calculado, 2)} (VB01-10)`
+        );
+      }
+    }
+
+    if (prod.valorProdutoLiquido !== undefined && prod.valorUnitarioLiquido !== undefined) {
+      const calculado = Math.round(prod.valorUnitarioLiquido * prod.quantidade * 100) / 100;
+      if (difere(prod.valorProdutoLiquido, calculado)) {
+        divergencias.push(
+          `${rotulo}: vProdLiq ${formatNumber(prod.valorProdutoLiquido, 2)} diverge de vUnComLiq x qCom (${formatNumber(calculado, 2)}) (I11c-20)`
+        );
+      }
+    }
+  });
+
+  const somaLiq = nfe.produtos.reduce((acc, prod) => acc + (prod.valorProdutoLiquido ?? 0), 0);
+  const temLiq = nfe.produtos.some((prod) => prod.valorProdutoLiquido !== undefined);
+  if (nfe.valorProdutoLiquidoTotal !== undefined && temLiq) {
+    if (difere(nfe.valorProdutoLiquidoTotal, Math.round(somaLiq * 100) / 100)) {
+      divergencias.push(
+        `vProdLiqTot ${formatNumber(nfe.valorProdutoLiquidoTotal, 2)} diverge da soma dos vProdLiq (${formatNumber(somaLiq, 2)}) (W01a)`
+      );
+    }
+  }
+
+  if (nfe.valorTotalNota !== undefined) {
+    const calculado = calcularVNFTot(nfe);
+    if (difere(nfe.valorTotalNota, calculado)) {
+      divergencias.push(
+        `vNFTot ${formatNumber(nfe.valorTotalNota, 2)} diverge da soma dos vItem (${formatNumber(calculado, 2)})`
+      );
+    }
+  }
+
+  return divergencias;
 }

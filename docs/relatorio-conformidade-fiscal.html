@@ -162,9 +162,9 @@
     </section>
 
     <section class="card gap p0b" data-p="p0">
-      <h3><span class="prio p0">P0</span> NT 2026.008 — "valor líquido" (produção 14/12/2026) <span class="badge warn">ATENÇÃO</span></h3>
+      <h3><span class="prio p0">P0</span> NT 2026.008 — "valor líquido" (produção 14/12/2026) <span class="badge ok">OK — implementado em 24/11/2026</span></h3>
       <p><strong>O que é:</strong> hoje o valor do produto (<code>vProd</code>) e o valor do item (<code>vItem</code>) misturam ou não os tributos conforme regras antigas. A NT 2026.008 redefine: <code>vProd</code> passa a <strong>excluir</strong> IBS/CBS/IS; <code>vItem</code> é o valor <strong>com todos os tributos</strong>; <code>vNFTot</code> é a soma dos <code>vItem</code>. Cria ainda <code>vProdLiq</code> (valor sem tributo algum) e o grupo de ICMS previsto de pagamento antecipado. Regras VB01-10/20 (Rej. 1105) fiscalizam a soma.</p>
-      <p><strong>Como está:</strong> a lib calcula totais no modelo antigo e não tem nenhum dos campos novos (<code>vUnComLiq</code>, <code>vProdLiq</code>, <code>vProdLiqTot</code>, <code>ICMSPrevistoPagtoAntecip</code>).</p>
+      <p><strong>Como está:</strong> implementado — campos <code>vUnComLiq</code>/<code>vProdLiq</code> (item), <code>vProdLiqTot</code> (total) e grupo <code>ICMSPrevistoPagtoAntecip</code> de ponta a ponta (entidade → Zod → builder, ordem do XSD 010h), mais helpers <code>calcularVItem</code>/<code>calcularVNFTot</code>/<code>validarTotais</code> com as Exceções 1 (2025/2026) e 2 (importação CFOP 3) e espelhos de I11c-20, W01a e soma do <code>vNFTot</code>; XML validado no pack 010h (13 testes).</p>
       <p><strong>Por que implementar:</strong> é o prazo mais próximo (3 semanas). Sem isso, a validação local aprova XML que a SEFAZ vai rejeitar a partir de 14/12.</p>
       <p class="files">Arquivos: <code>src/infra/xml/builders/total-groups.ts</code>, <code>produto-groups.ts</code>, entidades e schemas de produto/total</p>
     </section>

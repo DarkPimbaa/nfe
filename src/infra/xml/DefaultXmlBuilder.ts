@@ -407,6 +407,18 @@ export class DefaultXmlBuilder implements XmlBuilder {
         tag('qCom', formatNumber(prod.quantidade, 4)) +
         tag('vUnCom', formatNumber(prod.valorUnitario, 10)) +
         tag('vProd', formatNumber(prod.valorTotal, 2)) +
+        tag(
+          'vUnComLiq',
+          prod.valorUnitarioLiquido !== undefined
+            ? formatNumber(prod.valorUnitarioLiquido, 10)
+            : undefined
+        ) +
+        tag(
+          'vProdLiq',
+          prod.valorProdutoLiquido !== undefined
+            ? formatNumber(prod.valorProdutoLiquido, 2)
+            : undefined
+        ) +
         tag('cEANTrib', prod.eanTributavel || 'SEM GTIN') +
         tag('cBarraTrib', prod.codigoBarrasTributavel) +
         tag('uTrib', prod.unidade) +

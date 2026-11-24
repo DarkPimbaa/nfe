@@ -156,7 +156,8 @@ export const nfeSchema = z.object({
   observacoesFisco: z.array(observacaoSchema).max(10).optional(),
   processosReferenciados: z.array(processoReferenciadoSchema).max(100).optional(),
   solicitacaoNFF: z.string().min(1).max(5000).optional(),
-  agropecuario: agropecuarioSchema.optional()
+  agropecuario: agropecuarioSchema.optional(),
+  valorProdutoLiquidoTotal: z.number().min(0).optional()
 }).superRefine((nfe, ctx) => {
   const id = nfe.identificacao;
   const exigeRefItem =

@@ -134,6 +134,18 @@ export type ICMSProps = {
    * pela LC 192/2022: o imposto e por unidade de medida, nao por percentual.
    */
   readonly monofasico?: ICMSMonofasicoProps;
+
+  /**
+   * ICMS previsto no pagamento antecipado (grupo `ICMSPrevistoPagtoAntecip`,
+   * NT 2026.008): o ICMS que incidira no fornecimento futuro. Alternativo aos
+   * demais grupos de ICMS do item. Regra NB01-30 (Rej. 1281) a partir de 2027.
+   */
+  readonly pagamentoAntecipado?: ICMSPagamentoAntecipadoProps;
+};
+
+/** vICMSPrevisto — ICMS previsto no pagamento antecipado (NT 2026.008). */
+export type ICMSPagamentoAntecipadoProps = {
+  readonly valorPrevisto: number;
 };
 
 /**
@@ -274,6 +286,10 @@ export type ProdutoProps = {
   readonly quantidade: number;
   readonly valorUnitario: number;
   readonly valorTotal: number;
+  /** vUnComLiq — valor unitario liquido, sem tributos (NT 2026.008). */
+  readonly valorUnitarioLiquido?: number;
+  /** vProdLiq — valor do produto sem qualquer tributo (NT 2026.008). */
+  readonly valorProdutoLiquido?: number;
   readonly valorDesconto?: number;
   readonly valorFrete?: number;
   readonly valorSeguro?: number;
