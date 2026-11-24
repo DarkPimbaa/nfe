@@ -203,7 +203,11 @@ describe('TransmitNFeUseCase', () => {
 });
 
 describe('TransmitNFeUseCase — credito/debito (finNFe 5/6)', () => {
-  function nfeFinalidade(finalidade: number, extraId = {}, produtos = []): NFeProps {
+  function nfeFinalidade(
+    finalidade: number,
+    extraId: Record<string, unknown> = {},
+    produtos: unknown[] = []
+  ): NFeProps {
     return {
       identificacao: { finalidade, ...extraId },
       produtos

@@ -102,8 +102,8 @@ describe('Devolucao e CFOP (Fase 5) — regras puras', () => {
     assert.deepEqual(errosI08_140(nfe({ finalidade: 1 }, '5102')), []);
   });
 
-  it('B25-40: duas NF ref no cabecalho da devolucao falha; uma passa', () => {
-    const duas = nfe({ notasReferenciadas: [{ tipo: 'nfe', chaveAcesso: CHAVE }, { tipo: 'nfe', chaveAcesso: CHAVE }] });
+  it('B25-40: duas refs no cabecalho da devolucao falha (mesmo de tipos distintos); uma passa', () => {
+    const duas = nfe({ notasReferenciadas: [{ tipo: 'nfe', chaveAcesso: CHAVE }, { tipo: 'cte', chaveAcesso: CHAVE }] });
     assert.equal(errosB25_40(duas).length, 1);
     const uma = nfe({ notasReferenciadas: [{ tipo: 'nfe', chaveAcesso: CHAVE }] });
     assert.deepEqual(errosB25_40(uma), []);

@@ -98,7 +98,8 @@ export function errosI08_140(nfe: NFeProps): string[] {
 
 /**
  * B25-40 (Rej. 255): complementar (finNFe = 2), devolucao (finNFe = 4) e
- * notas de credito 01/03/04 referenciam no maximo UMA NF-e no cabecalho.
+ * notas de credito 01/03/04 referenciam no maximo UM documento no cabecalho
+ * (uma unica ocorrencia de NFref).
  */
 export function errosB25_40(nfe: NFeProps): string[] {
   const id = nfe.identificacao;
@@ -112,12 +113,10 @@ export function errosB25_40(nfe: NFeProps): string[] {
         id.tipoNotaCredito === '04'));
   if (!exigeRefUnica) return [];
 
-  const refs = (id.notasReferenciadas ?? []).filter(
-    (r) => r.tipo === 'nfe' || r.tipo === 'nfeSigilosa'
-  );
+  const refs = id.notasReferenciadas ?? [];
   if (refs.length > 1) {
     return [
-      `Devolucao/complementar/credito referencia ${refs.length} NF-e no cabecalho, maximo 1 (B25-40, Rej. 255)`
+      `Devolucao/complementar/credito referencia ${refs.length} documentos no cabecalho, maximo 1 NFref (B25-40, Rej. 255)`
     ];
   }
   return [];
