@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  getEventoUrl,
   getSefazUrl,
   ibgeToUf,
   UF_AUTORIZADOR
@@ -33,6 +34,35 @@ describe('sefaz-urls', () => {
 
     it('MA deve usar autorizador SVAN', () => {
       assert.equal(UF_AUTORIZADOR['MA'], 'SVAN');
+    });
+  });
+
+  describe('getEventoUrl', () => {
+    it('NFC-e (65) de UF via SVRS usa o RecepcaoEvento da NFC-e, não o da NF-e', () => {
+      // Regressão: sem NFCeRecepcaoEvento no SVRS, o cancelamento da NFC-e
+      // caía no webservice da NF-e 55 e a SEFAZ rejeitava com cStat 450.
+      assert.equal(
+        getEventoUrl('AL', 'homologacao', '65'),
+        'https://nfce-homologacao.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmx'
+      );
+      assert.equal(
+        getEventoUrl('AL', 'producao', '65'),
+        'https://nfce.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmx'
+      );
+    });
+
+    it('NF-e (55) continua no RecepcaoEvento da NF-e', () => {
+      assert.equal(
+        getEventoUrl('AL', 'homologacao', '55'),
+        'https://nfe-homologacao.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmx'
+      );
+    });
+
+    it('NFC-e (65) de GO usa o evento próprio de GO', () => {
+      assert.equal(
+        getEventoUrl('GO', 'homologacao', '65'),
+        'https://homolog.sefaz.go.gov.br/nfe/services/NFeRecepcaoEvento4'
+      );
     });
   });
 
